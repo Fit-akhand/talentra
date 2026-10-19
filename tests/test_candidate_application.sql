@@ -1,5 +1,97 @@
-    WHERE et.normalized_name = 'full_time'
-      AND wt.normalized_name = 'remote'
+-- Test suite: tests/test_candidate_application.sql
+-- Prerequisite: migrations 001 through 009 have been applied.
+
+BEGIN;
+
+DO $test$
+DECLARE
+    v_candidate_user_id BIGINT;
+    v_recruiter_user_id BIGINT;
+    v_org_id BIGINT;
+    v_candidate_profile_id BIGINT;
+    v_job_posting_id BIGINT;
+    v_application_id BIGINT;
+    v_duplicate_blocked BOOLEAN := FALSE;
+    v_history_count INTEGER := 0;
+BEGIN
+    ---------------------------------------------------------------------------
+    -- 1. Setup test fixtures: candidate user & profile, recruiter user & org,
+    --    and a job posting.
+    ---------------------------------------------------------------------------
+    INSERT INTO core.user_account (email)
+    VALUES ('candidate_app_test@example.com')
+    RETURNING id INTO v_candidate_user_id;
+
+    INSERT INTO profile.candidate_profile (
+        user_account_id,
+        headline,
+        total_experience_years,
+        profile_status
+    )
+    VALUES (
+        v_candidate_user_id,
+        'Full Stack Engineer',
+        4.0,
+        'active'
+    )
+    RETURNING id INTO v_candidate_profile_id;
+
+    INSERT INTO core.user_account (email)
+    VALUES ('recruiter_app_test@example.com')
+    RETURNING id INTO v_recruiter_user_id;
+
+    INSERT INTO recruitment.organization (
+        name,
+        slug,
+        organization_type,
+        created_by_user_account_id
+    )
+    VALUES (
+        'App Test Org',
+        'app-test-org',
+        'employer',
+        v_recruiter_user_id
+    )
+    RETURNING id INTO v_org_id;
+
+    INSERT INTO recruitment.organization_member (
+        organization_id,
+        user_account_id,
+        organization_role,
+        membership_status,
+        joined_at
+    )
+    VALUES (
+        v_org_id,
+        v_recruiter_user_id,
+        'recruiter',
+        'active',
+        CURRENT_TIMESTAMP
+    );
+
+    INSERT INTO recruitment.job_posting (
+        organization_id,
+        created_by_user_account_id,
+        employment_type_id,
+        work_type_id,
+        title,
+        description,
+        job_status,
+        published_at
+    )
+    SELECT
+        v_org_id,
+        v_recruiter_user_id,
+        et.id,
+        wt.id,
+        'Senior Software Engineer',
+        'Responsible for platform architecture and data engineering',
+        'published',
+        CURRENT_TIMESTAMP
+    FROM master.employment_type AS et
+    CROSS JOIN master.work_type AS wt
+    WHERE et.code = 'full_time'
+      AND wt.code = 'remote'
     RETURNING id INTO v_job_posting_id;
 
     IF v_job_posting_id IS NULL THEN
@@ -75,7 +167,7 @@
 
     ---------------------------------------------------------------------------
     -- 4. Change status and verify the application row is updated.
-    -- The migration's status-history trigger should record this transition.
+    -- The migration''s status-history trigger should record this transition.
     ---------------------------------------------------------------------------
     UPDATE recruitment.candidate_application
     SET application_status = 'shortlisted',
@@ -111,4 +203,3 @@ $test$;
 
 -- Keep the database unchanged after the test run.
 ROLLBACK;
-
