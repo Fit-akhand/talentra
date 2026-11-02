@@ -1,5 +1,6 @@
 -- Test suite: tests/test_administration.sql
 -- Prerequisite: migrations 001 through 012 applied.
+-- Covers: BR-003, BR-004, BR-034, BR-039, REQ-006, REQ-007, SEC-001, SEC-002, SEC-003, SEC-005, SEC-010, SEC-011   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 
@@ -102,7 +103,7 @@ BEGIN
             v_other_user_id,
             'password',
             'admin_candidate@example.com',
-            'another_hash'
+            '$argon2id$v=19$m=65536,t=3,p=4$another_hash_val'
         );
     EXCEPTION
         WHEN unique_violation THEN
@@ -192,7 +193,7 @@ BEGIN
     )
     VALUES (
         v_candidate_user_id,
-        'block.create',
+        'block.changed',
         'core',
         'user_block',
         v_block_id,

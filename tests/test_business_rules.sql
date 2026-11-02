@@ -1,5 +1,6 @@
 -- Test: test_business_rules.sql
 -- Domain: Cross-Schema / Rules Group 9 & 10
+-- Covers: BR-019, BR-025, REQ-026, REQ-032   (generated from the registers by scripts/lifecycle/tag_tests.py)
 -- Purpose: Verify advanced multi-entity business rule constraints (consultant policy enforcement, exclusion constraints, concurrent session limits, and wallet reconciliation).
 -- Engine: PostgreSQL 17
 
@@ -184,15 +185,15 @@ BEGIN
     VALUES (v_lic_id, v_user2_id);
 
     -- Session 1: device_laptop (succeeds)
-    SELECT core.create_session_with_device_limit(v_user2_id, 'device_laptop', 'sess_hash_1') INTO v_sess_token;
+    SELECT core.create_session_with_device_limit(v_user2_id, 'device_laptop', encode(sha256('sess_hash_1'::bytea), 'hex')) INTO v_sess_token;
     ASSERT v_sess_token IS NOT NULL, 'FAILED: First valid device session should be granted';
 
     -- Session 2: device_phone (succeeds)
-    SELECT core.create_session_with_device_limit(v_user2_id, 'device_phone', 'sess_hash_2') INTO v_sess_token;
+    SELECT core.create_session_with_device_limit(v_user2_id, 'device_phone', encode(sha256('sess_hash_2'::bytea), 'hex')) INTO v_sess_token;
     ASSERT v_sess_token IS NOT NULL, 'FAILED: Second valid device session should be granted';
 
     -- Session 3: device_tablet (exceeds limit 2: must return NULL and log audit breach)
-    SELECT core.create_session_with_device_limit(v_user2_id, 'device_tablet', 'sess_hash_3') INTO v_sess_token;
+    SELECT core.create_session_with_device_limit(v_user2_id, 'device_tablet', encode(sha256('sess_hash_3'::bytea), 'hex')) INTO v_sess_token;
     ASSERT v_sess_token IS NULL, 'FAILED: Third device session should be rejected when max_devices_per_user = 2';
     RAISE NOTICE 'PASS: create_session_with_device_limit successfully enforced device limit and rejected 3rd session';
 

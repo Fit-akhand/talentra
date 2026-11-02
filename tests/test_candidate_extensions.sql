@@ -1,5 +1,6 @@
 -- Test suite: tests/test_candidate_extensions.sql
 -- Prerequisite: migrations 001 through 010 applied.
+-- Covers: BR-006, BR-007, REQ-010, REQ-011   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 

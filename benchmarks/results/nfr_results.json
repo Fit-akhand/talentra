@@ -1,0 +1,70 @@
+{
+  "measured_at": "2026-10-27T21:51:32Z",
+  "engine": "PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2)",
+  "max_connections": 100,
+  "dataset": "dev seed plus the rows each check adds",
+  "NFR-006": {
+    "n": 265,
+    "p50_ms": 0.164,
+    "p95_ms": 0.189,
+    "p99_ms": 0.202,
+    "max_ms": 0.218,
+    "target_p95_ms": 5.0,
+    "met": true
+  },
+  "NFR-003": {
+    "n": 248,
+    "p50_ms": 0.582,
+    "p95_ms": 0.668,
+    "p99_ms": 1.185,
+    "max_ms": 1.758,
+    "history_rows_written_by_trigger": 423,
+    "target_p95_ms": 50.0,
+    "met": true
+  },
+  "NFR-005": {
+    "max_connections_in_flight": 80,
+    "different_users": {
+      "attempts": 500,
+      "succeeded": 500,
+      "wall_seconds": 1.05,
+      "latency": {
+        "n": 500,
+        "p50_ms": 35.92,
+        "p95_ms": 97.83,
+        "p99_ms": 122.163,
+        "max_ms": 147.629
+      }
+    },
+    "one_user_two_devices": {
+      "attempts": 500,
+      "succeeded": 2,
+      "open_sessions_in_database": 2,
+      "wall_seconds": 1.1,
+      "rejection_codes": [
+        "None"
+      ],
+      "latency": {
+        "n": 500,
+        "p50_ms": 137.949,
+        "p95_ms": 158.474,
+        "p99_ms": 174.397,
+        "max_ms": 186.782
+      }
+    },
+    "deadlocks": 0,
+    "met": true
+  },
+  "NFR-009": {
+    "n": 30,
+    "p50_ms": 7.539,
+    "p95_ms": 7.934,
+    "p99_ms": 7.974,
+    "max_ms": 7.987,
+    "applications_on_the_job": 50009,
+    "stages_returned": 6,
+    "bulk_load_seconds": 1.55,
+    "target_p95_ms": 25.0,
+    "met": true
+  }
+}

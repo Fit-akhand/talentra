@@ -1,5 +1,6 @@
 -- Test suite: tests/test_sourcing.sql
 -- Prerequisite: migrations 001 through 016 applied.
+-- Covers: BR-018, BR-019, BR-020, BR-021, REQ-025, REQ-026, REQ-027, REQ-028, SEC-002   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 

@@ -1,20 +1,20 @@
 -- Query 10: Analytics Time-to-Hire and Funnel Conversion KPI
 -- Domain: analytics
 -- Type: Analytical KPI Aggregation
--- Purpose: Compute average cycle times and conversion drop-offs across hiring stages by industry.
+-- Purpose: Average time from application to joining, and how many applications reached each stage, by industry.
+--
+-- Reads analytics.mv_hiring_funnel_by_industry (migration 028), which analytics.refresh_reporting_marts() rebuilds from
+-- fact_application_event. Time to hire is the elapsed time from the first event (applied) to the joined event. An earlier
+-- version averaged the cycle time of the joined row, which is the time spent in the previous stage, and then aggregated
+-- every event on each call (3.3 s at laptop scale, 0.4 ms now). The numbers are as fresh as the last refresh.
 
 SELECT
-    j.industry_name,
-    COUNT(DISTINCT f.candidate_application_id) AS total_applications,
-    COUNT(DISTINCT CASE WHEN f.new_status = 'shortlisted' THEN f.candidate_application_id END) AS shortlisted_count,
-    COUNT(DISTINCT CASE WHEN f.new_status = 'interviewed' THEN f.candidate_application_id END) AS interviewed_count,
-    COUNT(DISTINCT CASE WHEN f.new_status = 'offered' THEN f.candidate_application_id END) AS offered_count,
-    COUNT(DISTINCT CASE WHEN f.new_status = 'joined' THEN f.candidate_application_id END) AS hired_count,
-    ROUND(
-        AVG(CASE WHEN f.new_status = 'joined' THEN f.status_cycle_time_hours END),
-        2
-    ) AS avg_time_to_hire_hours
-FROM analytics.fact_application_event f
-JOIN analytics.dim_job_posting j ON f.job_posting_key = j.job_posting_key
-GROUP BY j.industry_name
+    industry_name,
+    total_applications,
+    shortlisted_count,
+    interviewed_count,
+    offered_count,
+    hired_count,
+    avg_time_to_hire_hours
+FROM analytics.mv_hiring_funnel_by_industry
 ORDER BY hired_count DESC, total_applications DESC;

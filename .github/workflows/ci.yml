@@ -1,0 +1,94 @@
+name: database-ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"      # weekly: the load test below is too slow to run on every push
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: talentra_admin
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: talentra
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U talentra_admin -d talentra"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: talentra_admin
+      PGPASSWORD: ci-only-password
+      PGDATABASE: talentra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install psycopg2-binary cryptography
+      - name: Apply migrations to an empty database
+        run: |
+          for f in db/migrations/*.sql; do
+            echo "applying $f"
+            psql -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+      - name: Run every test suite
+        run: python3 scripts/run_all_tests.py
+      - name: Seed a clean database and validate the data
+        run: |
+          psql -d postgres -c "DROP DATABASE talentra" -c "CREATE DATABASE talentra"
+          for f in db/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -q -f "$f"; done
+          python3 scripts/generate_data.py --scale dev
+          python3 scripts/validate_data.py
+      - name: Seeding twice must refuse
+        run: |
+          if python3 scripts/generate_data.py --scale dev; then echo "second seed was not refused"; exit 1; fi
+      - name: Every test names what it covers
+        run: python3 scripts/lifecycle/tag_tests.py --check
+      - name: Generated documents are up to date
+        run: |
+          # the committed documents were generated from the medium seed
+          psql -d postgres -c "DROP DATABASE talentra" -c "CREATE DATABASE talentra"
+          for f in db/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -q -f "$f"; done
+          python3 scripts/generate_data.py --scale medium
+          scripts/lifecycle/regenerate.sh
+          git diff --exit-code -- docs/phase-1-discover/05-audit-event-matrix.md docs/phase-2-model docs/phase-3-prove docs/phase-4-platform docs/phase-6-specify docs/lifecycle/step-map.md ':(exclude)docs/phase-3-prove/13-volume-sheet.md' || (echo "Generated docs differ from the committed copies: run scripts/lifecycle/regenerate.sh on a medium-seeded database and commit" && exit 1)
+
+  load-test:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: talentra_admin
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: talentra
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U talentra_admin -d talentra"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: talentra_admin
+      PGPASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install psycopg2-binary cryptography
+      - name: Mixed-workload load test (fails on any error, wallet drift or device-limit breach)
+        run: python3 scripts/run_load_test.py --levels 1,8,32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: load-test
+          path: benchmarks/results/load_test.*

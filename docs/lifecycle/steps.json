@@ -1,0 +1,765 @@
+{
+  "meta": {
+    "source": "Talencia Global DDD Playbook v1.0 (46 steps, 8 gates); Talentra Hackathon Docket (B1-B82)",
+    "verified_on": "2026-10-27",
+    "verification_basis": "Migrations 001-028 applied to a clean PostgreSQL 16.15 instance; 28 test suites executed; the docket's laptop scale (1M candidates, 5M applications, 11 GB) loaded, validated, benchmarked, backed up and restored (see docs/lifecycle/verification-2026-10-27.md). PostgreSQL 17, the declared target, was not available locally; the CI workflow runs on 17 but has not run yet.",
+    "status_values": {
+      "done": "Artifact exists and meets the step's Done-when test",
+      "partial": "Artifact exists but a Done-when condition is unmet",
+      "missing": "No artifact; in scope for this project",
+      "deferred": "Outside the hackathon docket scope (UI, ETL, application code); recorded, not built"
+    }
+  },
+  "gates": [
+    {
+      "id": "G1",
+      "phase": 1,
+      "name": "Problem understood",
+      "exit": "Every requirement has an ID and an actor. Every NFR has a numeric target. Every must-have feature appears in a workflow.",
+      "verdict": "conditional",
+      "basis": "Conditions 1 and 3 hold (120/120 requirements have an actor; 23/23 must-haves are in a workflow). Condition 2 holds in form only: all 27 NFR targets are engineer-proposed and unapproved. See docs/phase-1-discover/phase-report.md."
+    },
+    {
+      "id": "G2",
+      "phase": 2,
+      "name": "Model defined",
+      "exit": "Dictionary v1 is complete. Every rule states where it is enforced. Every personal-data column is classified with a retention period.",
+      "verdict": "open",
+      "basis": "Open. The generated dictionary is complete in structure but only 253 of 1,144 columns have a written definition (mostly audit and lifecycle columns); 150 nullable columns lack a justification; classification is pattern-based and unreviewed; tax identifiers are unprotected (blocked on human decisions); retention periods are unapproved. Met: every rule has an enforcement point (step 18), every column is classified, every table holding personal data states a retention period."
+    },
+    {
+      "id": "G3",
+      "phase": 3,
+      "name": "Model proven",
+      "exit": "Workflow coverage is 100%. Test suite v2 passes on sample data. The DDL runs cleanly and the baseline ER model is published.",
+      "verdict": "open",
+      "basis": "DDL runs cleanly (28/28) and all 28 suites pass on a clean PostgreSQL 16.15 database; the seed is reproducible and refuses a second run. Open: workflow coverage is 60 of 88 steps with no owners on the gaps (step 16); 2 decision-table cases are untested (step 18); older tests are not tagged with rule IDs (step 20); PostgreSQL 17 is untested locally."
+    },
+    {
+      "id": "G4",
+      "phase": 4,
+      "name": "Data platform ready",
+      "exit": "Full-volume data is loaded and reconciled. All automated suites pass in CI. NFR targets are met at volume.",
+      "verdict": "open",
+      "basis": "Open. Met at the docket's laptop scale: loaded and reconciled (4,999,836 applications), validated 15/15, backup and restore round-trip with 0 mismatches (restore 224 s against a 900 s objective), and three queries that missed their proposed targets were fixed and re-measured. Not met: no CI run yet; NFR targets are unapproved; concurrency is proven at 10 connections, not at the proposed 500; no automated stress test."
+    },
+    {
+      "id": "G5",
+      "phase": 5,
+      "name": "Insight validated",
+      "exit": "Every KPI is computable from the schema, and every dashboard number reconciles with its source.",
+      "verdict": "open",
+      "basis": "Condition 1 met: all 16 KPIs execute and reconcile with a golden dataset (known answers). Condition 2 not assessed: no dashboard exists, so no dashboard number can be reconciled to its source yet."
+    },
+    {
+      "id": "G6",
+      "phase": 6,
+      "name": "Specification signed off",
+      "exit": "The PRD is approved. The traceability matrix has no unexplained gaps. The UAT suite is approved.",
+      "verdict": "deferred",
+      "basis": "Product specification is outside the docket (UI out of scope). Only the traceability matrix is in scope."
+    },
+    {
+      "id": "G7",
+      "phase": 7,
+      "name": "Design approved",
+      "exit": "Every NFR maps to an ADR. The LLD is complete. All test suites exist before code generation starts.",
+      "verdict": "deferred",
+      "basis": "Application design is outside the docket."
+    },
+    {
+      "id": "G8",
+      "phase": 8,
+      "name": "Release ready",
+      "exit": "All suites pass. No critical or high defects are open. The rollback has been rehearsed.",
+      "verdict": "deferred",
+      "basis": "No application code in scope. Database backup/restore (docket B80) is tracked at step 28."
+    }
+  ],
+  "steps": [
+    {
+      "n": 1,
+      "phase": 1,
+      "name": "Requirement Analysis Docket",
+      "status": "done",
+      "docket": [
+        "B2",
+        "B3"
+      ],
+      "artifacts": [
+        "docs/phase-1-discover/01-requirements.md",
+        "docs/phase-1-discover/01-scope-assumptions.md",
+        "docs/phase-1-discover/01-docket-reconciliation.md"
+      ],
+      "note": "120 requirement IDs, 100% with an actor. Reconciliation found 14 gaps, but 7 of them (GAP-01, 02, 04, 07, 08, 10, 11) are in fact implemented and GAP-14 is partly covered; see phase-report section 4. Several headers still say 'docket unavailable'."
+    },
+    {
+      "n": 2,
+      "phase": 1,
+      "name": "Stakeholders, Personas and Roles",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-1-discover/02-personas.md"
+      ],
+      "note": "8 actors against the docket's 9: Guest exists as a seeded role holding only job.search, but no requirement or persona names it (GAP-05). The role-permission matrix is now in the database: 28 permissions, 99 role mappings (migration 021)."
+    },
+    {
+      "n": 3,
+      "phase": 1,
+      "name": "Feature Discovery",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-1-discover/03-feature-inventory.md",
+        "docs/phase-1-discover/03-competitive-benchmark.md"
+      ],
+      "note": "Competitors researched from their own pages on 2026-10-28: LinkedIn and one foundit page read in full (High); Naukri and foundit terms from search summaries of official pages that blocked the fetch (Medium). 17 capabilities compared, 6 gaps recorded and left unbuilt (DEC-26). Recruiter side only; compliance posture and pricing not researched."
+    },
+    {
+      "n": 4,
+      "phase": 1,
+      "name": "NFR Discovery",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-1-discover/04-nfr-register.md",
+        "scripts/run_nfr_checks.py",
+        "benchmarks/results/nfr_results.md",
+        "docs/lifecycle/decision-log.md"
+      ],
+      "note": "27 NFRs: 17 met and measured, 4 met by construction and tested, 3 met for the database but need an operator (availability, delivery sender, backup schedule), 2 boundaries, 1 out of scope, 0 failed. Targets are Delegated Decisions (assistant-set under the owner's delegation), AI-reviewed, not human-approved."
+    },
+    {
+      "n": 5,
+      "phase": 1,
+      "name": "Business Workflow Analysis",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-1-discover/05-workflows.md",
+        "docs/phase-1-discover/05-exceptions.md",
+        "docs/phase-1-discover/05-audit-event-matrix.md",
+        "scripts/lifecycle/gen_audit_matrix.py"
+      ],
+      "note": "Audit matrix is generated from the database: 14 of 14 sensitive classes, 21 action codes, 13 audit triggers, 6 writing functions. Exception catalogue updated where migrations 029 and 031 changed an entry (EXC-29, EXC-32); EXC-33 consent suppression remains open."
+    },
+    {
+      "n": 6,
+      "phase": 2,
+      "name": "Entities Discovery",
+      "status": "done",
+      "docket": [
+        "B4",
+        "B5",
+        "B6",
+        "B7",
+        "B24",
+        "B25",
+        "B26",
+        "B36",
+        "B37",
+        "B38",
+        "B48",
+        "B49",
+        "B50"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/06-entity-catalogue.md"
+      ],
+      "note": "Generated from the migrated database: 100 tables + 3 partitions. Rule Group 4 conformance is measured per table (every soft/hard/reference table now carries all four audit columns; tested)."
+    },
+    {
+      "n": 7,
+      "phase": 2,
+      "name": "Attributes Discovery",
+      "status": "done",
+      "docket": [
+        "B12",
+        "B13",
+        "B14",
+        "B15",
+        "B30",
+        "B31",
+        "B32",
+        "B42",
+        "B43",
+        "B44",
+        "B54",
+        "B55",
+        "B56"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/07-attribute-catalogue.md"
+      ],
+      "note": "1,212 columns across 105 base tables: type, nullability, default, keys, class and protection all generated from the database; every column defined, every nullable column says what NULL means (418 of 418; 35 written by hand). Classification is AI-reviewed (DEC-24), not human-reviewed."
+    },
+    {
+      "n": 8,
+      "phase": 2,
+      "name": "Entity Lifecycle and State Machines",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-2-model/08-state-machines.md"
+      ],
+      "note": "24 governed state machines (legal moves in master.status_transition, enforced by trigger, tested) and 5 recorded exemptions with reasons; no status column is undecided (tests/test_state_machines.sql)."
+    },
+    {
+      "n": 9,
+      "phase": 2,
+      "name": "Database, Tables and Relationships Discovery",
+      "status": "done",
+      "docket": [
+        "B8",
+        "B9",
+        "B10",
+        "B11",
+        "B16",
+        "B17",
+        "B18",
+        "B19",
+        "B27",
+        "B28",
+        "B29",
+        "B39",
+        "B40",
+        "B41",
+        "B51",
+        "B52",
+        "B53"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/09-er-diagram.md",
+        "docs/phase-2-model/09-architecture.md",
+        "db/migrations/001_create_schemas.sql"
+      ],
+      "note": "10 bounded schemas, 105 base tables; the gig-versus-core decision is recorded as DEC-28."
+    },
+    {
+      "n": 10,
+      "phase": 2,
+      "name": "Data Dictionary v1",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-2-model/07-attribute-catalogue.md",
+        "docs/phase-2-model/10-data-dictionary.md",
+        "db/migrations/033_document_columns.sql",
+        "tests/test_column_definitions.sql"
+      ],
+      "note": "Dictionary generated from the database: 1,212 of 1,212 columns defined (migration 033 and later), with class, protection and nullability reasons; tests/test_column_definitions.sql keeps it complete."
+    },
+    {
+      "n": 11,
+      "phase": 2,
+      "name": "Data Rules and Constraints Discovery",
+      "status": "done",
+      "docket": [
+        "B20",
+        "B21",
+        "B22",
+        "B33",
+        "B34",
+        "B35",
+        "B45",
+        "B46",
+        "B47",
+        "B57",
+        "B58",
+        "B59"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/11-rule-compliance.md",
+        "docs/phase-1-discover/01-requirements.md",
+        "tests/test_enumerations.sql",
+        "db/migrations/035_add_enumeration_catalogue.sql"
+      ],
+      "note": "All ten docket rule groups tabulated in 11-rule-compliance.md; none is a deviation. Enumerations: CHECK is authority, mirrored by a lookup table with English labels (DEC-27). Retention approvals are the assistant's (DEC-23)."
+    },
+    {
+      "n": 12,
+      "phase": 2,
+      "name": "Data Classification and Privacy",
+      "status": "done",
+      "docket": [
+        "B75",
+        "B76",
+        "B77",
+        "B78",
+        "B81"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/12-tax-id-security-design.md",
+        "docs/phase-2-model/12-threat-model.md",
+        "db/migrations/021_add_access_control.sql",
+        "db/migrations/024_add_column_classification.sql",
+        "tests/test_access_control.sql",
+        "tests/test_classification.sql",
+        "db/migrations/034_encrypt_organization_identifier.sql",
+        "scripts/identifier_crypto.py",
+        "tests/test_identifier_encryption.sql"
+      ],
+      "note": "5 roles, row-level security on candidate and organisation tables, masking view, hash-format checks, append-only enforcement, erasure, column classification, tax identifiers encrypted (DEC-25). AI-reviewed under the owner's delegation; the encryption has no consuming application yet and the seed key is public."
+    },
+    {
+      "n": 13,
+      "phase": 3,
+      "name": "Data Volumetrics and Distribution Profile",
+      "status": "done",
+      "docket": [
+        "B74"
+      ],
+      "artifacts": [
+        "docs/phase-4-platform/28-performance-report.md",
+        "benchmarks/results/scale_comparison.md",
+        "docs/phase-3-prove/13-volume-sheet.md",
+        "scripts/lifecycle/gen_volume_sheet.py"
+      ],
+      "note": "Two measured sizes 100x apart (10K and 1M candidates; 50K and 5M applications) with the distributions that produced them, and a generated per-table volume sheet (launch, one year, three years; null rates; size). The model puts the laptop dataset at 10.5 GB against 11 GB measured, and the docket target at about 150 GB (a projection)."
+    },
+    {
+      "n": 14,
+      "phase": 3,
+      "name": "Sample Data Generation (Discovery)",
+      "status": "done",
+      "docket": [
+        "B60",
+        "B61",
+        "B62",
+        "B63",
+        "B64"
+      ],
+      "artifacts": [
+        "db/seeds/development_data.sql",
+        "db/seeds/golden_dataset.sql",
+        "scripts/generate_data.py",
+        "tests/golden_kpi_expected.json",
+        "tests/test_golden_kpis.py"
+      ],
+      "note": "Seeded and reproducible (--seed), with a hand-built golden dataset whose KPI answers are known and reconciled (tests/test_golden_kpis.py). At medium and laptop scale every base table except audit.system_error_log is populated; that one is written by the application."
+    },
+    {
+      "n": 15,
+      "phase": 3,
+      "name": "Test Suite v1 (Data)",
+      "status": "done",
+      "docket": [
+        "B66"
+      ],
+      "artifacts": [
+        "tests/test_access_control.sql",
+        "tests/test_classification.sql",
+        "tests/test_constraints.sql",
+        "tests/test_domains_and_transitions.sql",
+        "tests/test_identity.sql",
+        "tests/test_lifecycle.sql",
+        "tests/test_master_data.sql"
+      ],
+      "note": "Executed 2026-10-28 on PostgreSQL 17.11: every SQL suite passes, and the runner also flags FAIL markers, not just ERROR lines."
+    },
+    {
+      "n": 16,
+      "phase": 3,
+      "name": "Schema Coverage against Business Workflow",
+      "status": "done",
+      "docket": [
+        "B67",
+        "B68",
+        "B69"
+      ],
+      "artifacts": [
+        "docs/phase-3-prove/16-workflow-coverage.md",
+        "docs/phase-3-prove/16-gap-owners.json",
+        "scripts/lifecycle/gen_workflow_coverage.py",
+        "docs/phase-1-discover/05-workflows.md"
+      ],
+      "note": "21 workflows, 129 steps; 124 are backed by a table, function, view, governed state machine, query, script or another workflow, and the other 5 are owned by Application (named in 16-gap-owners.json); no table is unreached by a workflow (107 of 107); every workflow states which sensitive action classes it evidences. The generator fails when a step has neither a backing artefact nor an owner."
+    },
+    {
+      "n": 17,
+      "phase": 3,
+      "name": "Design-Based Refinement",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/gate-reviews/phase2c-documentation-audit.md",
+        "docs/gate-reviews/phase3-followup-findings.md",
+        "docs/phase-3-prove/17-change-log.md"
+      ],
+      "note": "Change log updated through Phase 3 with reasons; the deferred list now names what is left and why."
+    },
+    {
+      "n": 18,
+      "phase": 3,
+      "name": "Business Rules and Data Constraints v2",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-3-prove/18-business-rules-catalogue.md",
+        "docs/phase-3-prove/18-rule-extensions.json",
+        "scripts/lifecycle/gen_rules_catalogue.py",
+        "tests/test_br_decision_and_outreach.sql",
+        "db/migrations/037_enforce_outreach_block_rule.sql"
+      ],
+      "note": "40 rules (BR-001..027 from the register, BR-028..040 added from the docket), each with an owner role, an enforcement point checked against the live catalog (39 database, 1 reconciled), and a named test. All four rows of the BR-002 decision table are tested; BR-005 and BR-021 moved into the database (migration 037)."
+    },
+    {
+      "n": 19,
+      "phase": 3,
+      "name": "Data Dictionary v2",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-2-model/07-attribute-catalogue.md",
+        ".github/workflows/ci.yml",
+        "scripts/lifecycle/gen_model_catalogues.py"
+      ],
+      "note": "Dictionary is generated from the database, and the CI step 'generated documents are up to date' fails when it differs. The hand-written 10-data-dictionary.md is superseded by it."
+    },
+    {
+      "n": 20,
+      "phase": 3,
+      "name": "Test Suite v2 (Data, Business and NFR)",
+      "status": "done",
+      "docket": [
+        "B79"
+      ],
+      "artifacts": [
+        "tests/test_business_rules.sql",
+        "tests/test_concurrency.py",
+        "tests/test_golden_kpis.py",
+        "tests/test_wallet_functions.sql",
+        "scripts/run_nfr_checks.py",
+        "scripts/lifecycle/tag_tests.py"
+      ],
+      "note": "39 suites: 34 SQL, concurrency (4 tests, including the wallet function under 40 simultaneous debits), golden-dataset KPIs, benchmark harness, identifier crypto and an NFR measurement run. Every test file carries a Covers: header naming the requirement, rule and NFR IDs, checked by tag_tests.py --check; no requirement lacks a test or script, and no test lacks a requirement."
+    },
+    {
+      "n": 21,
+      "phase": 3,
+      "name": "Baseline ER and Physical Model",
+      "status": "done",
+      "docket": [
+        "B23",
+        "B82"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/09-er-diagram.md",
+        "db/migrations/019_create_analytics_marts.sql",
+        "db/migrations/026_fix_domain_rule_gaps.sql",
+        "db/migrations/027_seed_job_roles.sql",
+        "db/migrations/028_add_query_performance_structures.sql"
+      ],
+      "note": "37 of 37 migrations apply cleanly from empty on PostgreSQL 17.11 (the target) and applied on 16.15 earlier; the backup and restore check confirmed identical row counts and object counts at 11 GB. The CI workflow is written but has not run on GitHub."
+    },
+    {
+      "n": 22,
+      "phase": 4,
+      "name": "Integration and Source Mapping",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-4-platform/22-integration-boundaries.md",
+        "scripts/lifecycle/gen_integration_doc.py",
+        "db/migrations/038_add_integration_data_structures.sql",
+        "tests/test_integration_structures.sql"
+      ],
+      "note": "The nine docket boundaries are generated from messaging.integration_boundary with their stored-versus-referenced data, failure behaviour, retry policy and the database objects that hold what each promises (every object checked in the catalog). Four promises had no table behind them (identity verification, social sharing, company reviews, geocoding place reference) and now do (migration 038). Legacy sync: 60 mapped columns, 31 synchronised with a direction, one of five conflict rules and an owner role, and 29 recorded as not synchronised with the reason; the legacy field names are assumptions because no legacy schema existed."
+    },
+    {
+      "n": 23,
+      "phase": 4,
+      "name": "Data Generation at Scale",
+      "status": "done",
+      "docket": [
+        "B60",
+        "B61"
+      ],
+      "artifacts": [
+        "benchmarks/results/scale_comparison.md",
+        "scripts/generate_data.py"
+      ],
+      "note": "Run on 2026-10-27: 1,000,000 candidates, 100,000 jobs, 4,999,836 applications, 9,636,883 status events, 11 GB, loaded in 1,414 s (23.6 min); validator 15/15 at that scale. Volumes follow the step 13 distributions. A 3-year volume (to find where performance degrades) is projected in scale_comparison.md, not generated."
+    },
+    {
+      "n": 24,
+      "phase": 4,
+      "name": "Data Seeding",
+      "status": "done",
+      "docket": [
+        "B62",
+        "B63",
+        "B64"
+      ],
+      "artifacts": [
+        "db/seeds/reference_data.sql",
+        "db/seeds/development_data.sql",
+        "db/migrations/004_seed_master_reference_data.sql"
+      ],
+      "note": "A fresh database seeds in 0.4 s (dev) to 9 s (medium) and the same seed gives the same shape. The seed now also fills the integration tables (verifications, share events, review figures, legacy ids, outbox events). Seeding a populated database is refused; --append is the explicit opt-in."
+    },
+    {
+      "n": 25,
+      "phase": 4,
+      "name": "Data Ingestion",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "ETL and data migration are explicitly out of scope in the docket (issued as a separate requirement). Not designed here."
+    },
+    {
+      "n": 26,
+      "phase": 4,
+      "name": "Test Automation (Data Quality and Analytics)",
+      "status": "done",
+      "docket": [
+        "B66"
+      ],
+      "artifacts": [
+        "scripts/validate_data.py",
+        "scripts/lifecycle/gen_quality_scorecard.py",
+        "docs/phase-4-platform/26-table-quality.md",
+        "docs/phase-4-platform/26-27-28-test-automation.md",
+        ".github/workflows/ci.yml"
+      ],
+      "note": "Validator 15/15 on dev, medium and laptop seeds; a per-table scorecard (7 checks) puts all 113 tables at 7/7 after it found 41 tables with unindexed foreign keys (migration 039) and 5 empty tables. CI is written but has not run on GitHub."
+    },
+    {
+      "n": 27,
+      "phase": 4,
+      "name": "Test Automation (Business Rules)",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "scripts/run_all_tests.py",
+        "scripts/lifecycle/tag_tests.py",
+        "docs/phase-4-platform/26-27-28-test-automation.md",
+        ".github/workflows/ci.yml"
+      ],
+      "note": "run_all_tests.py runs 40 suites against any PostgreSQL; every rule in the catalogue names its test and tag_tests.py --check enforces the reverse; the CI workflow runs all of it plus the generated-documents check (not yet run on GitHub)."
+    },
+    {
+      "n": 28,
+      "phase": 4,
+      "name": "Test Automation (NFR)",
+      "status": "done",
+      "docket": [
+        "B65",
+        "B70",
+        "B71",
+        "B72",
+        "B73",
+        "B74",
+        "B80"
+      ],
+      "artifacts": [
+        "docs/phase-4-platform/26-27-28-test-automation.md",
+        "scripts/run_nfr_checks.py",
+        "scripts/run_load_test.py",
+        "benchmarks/results/nfr_results.md",
+        "benchmarks/results/load_test.md",
+        "benchmarks/results/scale_comparison.md",
+        "scripts/run_benchmarks.py",
+        "scripts/backup_restore.sh"
+      ],
+      "note": "Benchmarks at 10K and 1M candidates, NFR checks (write, 500 sessions, master lookups, 50,000-application pipeline), a mixed-workload load test at 1, 8, 32 and 64 clients (no errors, no wallet drift, no device-limit breach, worst p95 18.5 ms at 64 clients), and backup/restore at 11 GB (restore 224 s of 900 s). Not done: 500 simultaneous connections, a soak test, and a repeat of the laptop run on the current schema."
+    },
+    {
+      "n": 29,
+      "phase": 5,
+      "name": "KPI Discovery",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-5-insight/29-kpi-catalogue.md",
+        "db/kpi/01_hiring_volume.sql",
+        "scripts/lifecycle/gen_kpi_catalogue.py"
+      ],
+      "note": "16 KPIs, each a SQL file the generator executes (16 of 16 compute) and each reconciled to a hand-built golden dataset with known answers. Targets are unset (none in the docket; owners must approve)."
+    },
+    {
+      "n": 30,
+      "phase": 5,
+      "name": "Business Intelligence and Analytics (C-Suite)",
+      "status": "missing",
+      "docket": [
+        "B49",
+        "B52",
+        "B55",
+        "B58"
+      ],
+      "artifacts": [
+        "db/migrations/019_create_analytics_marts.sql",
+        "db/migrations/023_add_analytics_loader.sql",
+        "db/queries/10_analytics_time_to_hire_kpi.sql",
+        "tests/test_golden_kpis.py"
+      ],
+      "note": "The star schema now has a real load process (migration 023) and 16 KPIs reconcile with a golden dataset. Still missing: the executive question set and a dashboard (UI is out of scope, but SQL views and the reconciliation are not)."
+    },
+    {
+      "n": 31,
+      "phase": 6,
+      "name": "Feature Analysis and Requirements Engineering",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "User stories and prioritised backlog are application-level; the docket asks for a database design only."
+    },
+    {
+      "n": 32,
+      "phase": 6,
+      "name": "PRD (Product Requirements Document)",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "No product build in scope."
+    },
+    {
+      "n": 33,
+      "phase": 6,
+      "name": "Requirements vs Database Gap Analysis",
+      "status": "partial",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-1-discover/01-docket-reconciliation.md"
+      ],
+      "note": "A docket-to-requirement reconciliation exists; it needs correction (7 false gaps) and a requirement-to-table mapping."
+    },
+    {
+      "n": 34,
+      "phase": 6,
+      "name": "Traceability Matrix",
+      "status": "done",
+      "docket": [],
+      "artifacts": [
+        "docs/phase-6-specify/34-traceability-matrix.md",
+        "scripts/lifecycle/gen_traceability.py"
+      ],
+      "note": "Generated from the requirement register. Test and KPI links are limited to what the register names; code links are migration line references."
+    },
+    {
+      "n": 35,
+      "phase": 6,
+      "name": "UAT Scenarios Test Suite Discovery",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "No users or UI in scope."
+    },
+    {
+      "n": 36,
+      "phase": 7,
+      "name": "Prototyping",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "UI is out of scope."
+    },
+    {
+      "n": 37,
+      "phase": 7,
+      "name": "Architecture Definition",
+      "status": "partial",
+      "docket": [
+        "B1"
+      ],
+      "artifacts": [
+        "docs/phase-2-model/09-architecture.md"
+      ],
+      "note": "Database architecture is documented (modular monolith, PostgreSQL). The engine choice has no ADR recording the rejected option (MySQL)."
+    },
+    {
+      "n": 38,
+      "phase": 7,
+      "name": "HLD (High-Level Design)",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "Application component design is outside the docket."
+    },
+    {
+      "n": 39,
+      "phase": 7,
+      "name": "LLD (Low-Level Design)",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "No API layer in scope."
+    },
+    {
+      "n": 40,
+      "phase": 7,
+      "name": "Test Suite (Functional)",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "No application features to test."
+    },
+    {
+      "n": 41,
+      "phase": 7,
+      "name": "Test Suite (Integration, E2E and Security)",
+      "status": "partial",
+      "docket": [
+        "B78",
+        "B79"
+      ],
+      "artifacts": [
+        "tests/test_access_control.sql",
+        "tests/test_administration.sql",
+        "tests/test_security.sql"
+      ],
+      "note": "Database-level access and audit tests now exist and act as each role (tests/test_access_control.sql): tenant isolation, spoofing, blocked candidates, append-only, masking. No application-layer tests (out of scope)."
+    },
+    {
+      "n": 42,
+      "phase": 8,
+      "name": "Code Generation",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "No application code in scope."
+    },
+    {
+      "n": 43,
+      "phase": 8,
+      "name": "AI Output Review and Code Verification",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "Applies once code exists. Review of this repository's own AI-assisted output is recorded under docs/gate-reviews."
+    },
+    {
+      "n": 44,
+      "phase": 8,
+      "name": "Test Execution and Defect Loop",
+      "status": "partial",
+      "docket": [],
+      "artifacts": [
+        "docs/lifecycle/verification-2026-10-27.md"
+      ],
+      "note": "Execution run recorded with defects and their closure. No standing defect log with severities."
+    },
+    {
+      "n": 45,
+      "phase": 8,
+      "name": "Release",
+      "status": "deferred",
+      "docket": [
+        "B80"
+      ],
+      "artifacts": [],
+      "note": "No CI/CD or release in scope. Backup and restore is tracked at step 28."
+    },
+    {
+      "n": 46,
+      "phase": 8,
+      "name": "Observe and Learn",
+      "status": "deferred",
+      "docket": [],
+      "artifacts": [],
+      "note": "No production system."
+    }
+  ]
+}

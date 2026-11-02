@@ -1,9 +1,17 @@
-
+# Talentra database stack.
+#   postgres     PostgreSQL 17 with query statistics enabled (feeds audit.ops_slow_queries)
+#   maintenance  runs core.run_maintenance() every MAINTENANCE_INTERVAL_SECONDS: refresh marts, purge expired data,
+#                erase dormant accounts (only where the retention period is approved). Without a scheduler the
+#                24-hour mart staleness target (NFR-020) cannot be met. Use pg_cron or a platform CronJob in production if you prefer.
+#
+# Start:   POSTGRES_PASSWORD=... docker compose up -d      (or put POSTGRES_PASSWORD in .env; see .env.example)
+# Migrate: for f in db/migrations/*.sql; do psql -h 127.0.0.1 -U talentra_admin -d talentra -v ON_ERROR_STOP=1 -q -f "$f"; done
 services:
   postgres:
     image: postgres:17
     container_name: talentra-postgres
     restart: unless-stopped
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all"]
     environment:
       POSTGRES_DB: talentra
       POSTGRES_USER: talentra_admin
@@ -17,6 +25,29 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  maintenance:
+    image: postgres:17
+    container_name: talentra-maintenance
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: talentra_admin
+      PGDATABASE: talentra
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      MAINTENANCE_INTERVAL_SECONDS: ${MAINTENANCE_INTERVAL_SECONDS:-900}
+    entrypoint: ["/bin/sh", "-c"]
+    # waits until migration 031 has been applied, then loops; a failed run is logged by the procedure itself and the loop carries on
+    command:
+      - |
+        until psql -Atc "SELECT 1 FROM pg_proc WHERE proname = 'run_maintenance'" | grep -q 1; do sleep 30; done
+        while true; do
+          psql -v ON_ERROR_STOP=0 -q -c "CALL core.run_maintenance();" || true
+          sleep "$$MAINTENANCE_INTERVAL_SECONDS"
+        done
 
 volumes:
   talentra_pgdata:

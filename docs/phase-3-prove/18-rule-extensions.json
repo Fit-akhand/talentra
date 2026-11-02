@@ -1,0 +1,310 @@
+{
+ "_note": "Owners (roles assigned by the assistant, DEC-30), overrides for rules whose register row cites no database object, and docket rules that were not in the BR register. Every named object and test file is verified against the live catalog by scripts/lifecycle/gen_rules_catalogue.py.",
+ "owners": {
+  "BR-001": "Platform",
+  "BR-002": "Platform",
+  "BR-003": "Security",
+  "BR-004": "Security",
+  "BR-005": "Platform",
+  "BR-006": "Product",
+  "BR-007": "Product",
+  "BR-008": "Product",
+  "BR-009": "Product",
+  "BR-010": "Security",
+  "BR-011": "Product",
+  "BR-012": "Product",
+  "BR-013": "Product",
+  "BR-014": "Product",
+  "BR-015": "Product",
+  "BR-016": "Product",
+  "BR-017": "Data",
+  "BR-018": "Product",
+  "BR-019": "Product",
+  "BR-020": "Product",
+  "BR-021": "Security",
+  "BR-022": "Product",
+  "BR-023": "Product",
+  "BR-024": "Product",
+  "BR-025": "Product",
+  "BR-026": "Product",
+  "BR-027": "Product"
+ },
+ "overrides": {
+  "BR-005": {
+   "point": "database",
+   "mechanism": "the application role holds no INSERT, UPDATE or DELETE on the master code tables; no master table has a foreign key outside master except the audit columns to core.user_account",
+   "tests": [
+    "test_br_decision_and_outreach.sql"
+   ],
+   "objects": []
+  },
+  "BR-017": {
+   "point": "reconciled",
+   "mechanism": "the marts are rebuilt from the authoritative tables (analytics.load_reporting_marts) and sixteen KPIs are reconciled to a hand-built dataset; a denormalised copy that drifted would fail that reconciliation",
+   "tests": [
+    "test_golden_kpis.py"
+   ],
+   "objects": [
+    "load_reporting_marts"
+   ]
+  },
+  "BR-021": {
+   "point": "database",
+   "mechanism": "trigger trg_outreach_recipient_block (migration 037) stores a blocked recipient as blocked and refuses delivery",
+   "tests": [
+    "test_br_decision_and_outreach.sql",
+    "test_sourcing.sql"
+   ],
+   "objects": [
+    "trg_outreach_recipient_block"
+   ]
+  },
+  "BR-002": {
+   "point": "database",
+   "mechanism": "function core.create_session_with_device_limit locks the user row and counts distinct active devices against the licence entitlement",
+   "tests": [],
+   "objects": [
+    "create_session_with_device_limit"
+   ]
+  },
+  "BR-003": {
+   "point": "database",
+   "mechanism": "function core.revoke_user_session sets revoked_at and ended_at and writes the audit event",
+   "tests": [],
+   "objects": [
+    "revoke_user_session"
+   ]
+  },
+  "BR-006": {
+   "point": "database",
+   "mechanism": "CHECK ck_candidate_profile_visibility allows exactly private, recruiters or public; row-level security reads it through core.can_view_candidate",
+   "tests": [],
+   "objects": [
+    "ck_candidate_profile_visibility",
+    "can_view_candidate"
+   ]
+  },
+  "BR-008": {
+   "point": "database",
+   "mechanism": "partial unique index uq_candidate_document_primary_resume allows one active primary resume per candidate",
+   "tests": [],
+   "objects": [
+    "uq_candidate_document_primary_resume"
+   ]
+  },
+  "BR-009": {
+   "point": "database",
+   "mechanism": "CHECK constraints ck_candidate_skill_proficiency and ck_candidate_skill_experience; one claim per skill (uq_candidate_skill_profile_skill)",
+   "tests": [],
+   "objects": [
+    "ck_candidate_skill_proficiency",
+    "ck_candidate_skill_experience",
+    "uq_candidate_skill_profile_skill"
+   ]
+  },
+  "BR-011": {
+   "point": "database",
+   "mechanism": "CHECK ck_organization_type; identifiers in organization_identifier (unique per country and type); ck_organization_hierarchy_not_self forbids an organisation being its own parent",
+   "tests": [],
+   "objects": [
+    "ck_organization_type",
+    "uq_organization_identifier_bidx",
+    "ck_organization_hierarchy_not_self"
+   ]
+  },
+  "BR-013": {
+   "point": "database",
+   "mechanism": "unique constraint uq_job_questionnaire_job allows one questionnaire per job",
+   "tests": [],
+   "objects": [
+    "uq_job_questionnaire_job"
+   ]
+  },
+  "BR-022": {
+   "point": "database",
+   "mechanism": "CHECK ck_gig_worker_profile_verification allows unverified, verified or suspended",
+   "tests": [],
+   "objects": [
+    "ck_gig_worker_profile_verification"
+   ]
+  }
+ },
+ "extensions": [
+  {
+   "id": "BR-028",
+   "rule": "Recruiters and other users cannot create a candidate profile for someone else; candidates register themselves (docket GAP-06)",
+   "objects": [
+    "trg_candidate_profile_self_registration"
+   ],
+   "tests": [
+    "test_domains_and_transitions.sql"
+   ],
+   "owner": "Security",
+   "source": "docket privilege rules"
+  },
+  {
+   "id": "BR-029",
+   "rule": "Wallet and payment ledgers are append-only; a correction is a new entry that references the original",
+   "objects": [
+    "trg_prevent_wallet_ledger_tampering",
+    "ck_wallet_ledger_correction_reference"
+   ],
+   "tests": [
+    "test_commercial.sql",
+    "test_access_control.sql"
+   ],
+   "owner": "Finance",
+   "source": "docket rule group 10"
+  },
+  {
+   "id": "BR-030",
+   "rule": "Profile download and view history is append-only and records actor, subject, time and credit",
+   "objects": [
+    "trg_prevent_download_history_tampering",
+    "trg_candidate_profile_download_history_block_truncate"
+   ],
+   "tests": [
+    "test_domains_and_transitions.sql",
+    "test_commercial.sql"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 10"
+  },
+  {
+   "id": "BR-031",
+   "rule": "A wallet balance is never negative and changes only together with a ledger entry",
+   "objects": [
+    "ck_wallet_balance",
+    "post_wallet_entry"
+   ],
+   "tests": [
+    "test_wallet_functions.sql",
+    "test_concurrency.py"
+   ],
+   "owner": "Finance",
+   "source": "docket rule group 10; migration 036"
+  },
+  {
+   "id": "BR-032",
+   "rule": "A status column changes only along a listed transition, or is a recorded exemption",
+   "objects": [
+    "enforce_status_transition",
+    "trg_candidate_application_status_transition"
+   ],
+   "tests": [
+    "test_state_machines.sql",
+    "test_domains_and_transitions.sql"
+   ],
+   "owner": "Platform",
+   "source": "playbook step 08; migrations 022 and 032"
+  },
+  {
+   "id": "BR-033",
+   "rule": "Each of the 14 sensitive action classes writes an audit event or is evidenced by an append-only ledger",
+   "objects": [
+    "log_change",
+    "fk_audit_event_action"
+   ],
+   "tests": [
+    "test_audit_coverage.sql"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 10 (B79)"
+  },
+  {
+   "id": "BR-034",
+   "rule": "Audit events cannot be updated, deleted or truncated",
+   "objects": [
+    "trg_prevent_audit_event_tampering"
+   ],
+   "tests": [
+    "test_administration.sql",
+    "test_audit_coverage.sql"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 10"
+  },
+  {
+   "id": "BR-035",
+   "rule": "Personal data past its retention period is purged by a scheduled, audited job",
+   "objects": [
+    "purge_expired_data"
+   ],
+   "tests": [
+    "test_lifecycle.sql",
+    "test_integration_maintenance.sql"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 4; DEC-23"
+  },
+  {
+   "id": "BR-036",
+   "rule": "Erasing an account anonymises the person and keeps the financial and audit records",
+   "objects": [
+    "erase_user_account"
+   ],
+   "tests": [
+    "test_lifecycle.sql",
+    "test_audit_coverage.sql"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 4"
+  },
+  {
+   "id": "BR-037",
+   "rule": "A registration or tax identifier is stored encrypted and is unique per country and type",
+   "objects": [
+    "uq_organization_identifier_bidx",
+    "ck_organization_identifier_bidx",
+    "trg_organization_identifier_binding"
+   ],
+   "tests": [
+    "test_identifier_encryption.sql",
+    "test_identifier_crypto.py"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 6; DEC-25"
+  },
+  {
+   "id": "BR-038",
+   "rule": "A profile download is charged at the listed price once per organisation and candidate",
+   "objects": [
+    "download_candidate_profile",
+    "uq_credit_price"
+   ],
+   "tests": [
+    "test_wallet_functions.sql"
+   ],
+   "owner": "Finance",
+   "source": "DEC-29"
+  },
+  {
+   "id": "BR-039",
+   "rule": "Impersonation needs a platform administrator and a reason, and is audited at start and end",
+   "objects": [
+    "begin_impersonation",
+    "end_impersonation"
+   ],
+   "tests": [
+    "test_audit_coverage.sql",
+    "test_administration.sql"
+   ],
+   "owner": "Security",
+   "source": "docket rule group 10"
+  },
+  {
+   "id": "BR-040",
+   "rule": "An integration exchange is idempotent and dead-letters after the boundary's maximum attempts",
+   "objects": [
+    "uq_integration_event_idempotency",
+    "fail_integration_event",
+    "ck_integration_event_attempts"
+   ],
+   "tests": [
+    "test_integration_maintenance.sql"
+   ],
+   "owner": "Platform",
+   "source": "docket section 6; NFR-027"
+  }
+ ]
+}

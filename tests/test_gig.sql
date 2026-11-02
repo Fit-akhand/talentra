@@ -1,5 +1,6 @@
 -- Test suite: tests/test_gig.sql
 -- Prerequisite: migrations 001 through 014 applied.
+-- Covers: BR-022, BR-023, BR-024, BR-026, BR-027, REQ-008, REQ-029, REQ-030, REQ-031, REQ-033, REQ-034   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 
@@ -84,13 +85,15 @@ BEGIN
         gig_worker_profile_id,
         skill_id,
         custom_title,
-        rate_override
+        rate_override,
+        currency_code
     )
     VALUES (
         v_worker_profile_id,
         v_skill_id,
         'PostgreSQL Query Tuning Consultation',
-        100.00
+        100.00,
+        'USD'
     );
 
     -- 4. Create Gig Requests

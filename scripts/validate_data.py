@@ -21,11 +21,11 @@ import sys
 import time
 import psycopg2
 
-DB_HOST = os.getenv("POSTGRES_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
-DB_NAME = os.getenv("POSTGRES_DB", "talentra")
-DB_USER = os.getenv("POSTGRES_USER", "talentra_admin")
-DB_PASS = os.getenv("POSTGRES_PASSWORD", "354vctrho9t769874t8B*^&$%&**tf2eej2rh")
+DB_HOST = os.getenv("POSTGRES_HOST") or os.getenv("PGHOST", "127.0.0.1")
+DB_PORT = int(os.getenv("POSTGRES_PORT") or os.getenv("PGPORT", "5432"))
+DB_NAME = os.getenv("POSTGRES_DB") or os.getenv("PGDATABASE", "talentra")
+DB_USER = os.getenv("POSTGRES_USER") or os.getenv("PGUSER", "talentra_admin")
+DB_PASS = os.getenv("POSTGRES_PASSWORD") or os.getenv("PGPASSWORD")
 
 def get_connection():
     return psycopg2.connect(
@@ -327,7 +327,7 @@ class DataValidator:
     def run_all(self):
         print("================================================================")
         print(" Talentra Comprehensive Data Quality & Compliance Validator")
-        print(" Engine: PostgreSQL 17 | Rule Groups 1–10 Verification")
+        print(" Rule Groups 1–10 Verification")
         print("================================================================")
         t0 = time.time()
         self.validate_rg1_naming_conventions()

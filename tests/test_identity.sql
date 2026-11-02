@@ -1,4 +1,5 @@
 
+-- Covers: BR-001, BR-002, REQ-001, REQ-002, REQ-003, SEC-007   (generated from the registers by scripts/lifecycle/tag_tests.py)
 -- Test suite: tests/test_identity.sql
 -- Prerequisite: migrations 001 and 002 have been applied.
 
@@ -118,7 +119,7 @@ BEGIN
     SELECT
         id,
         'identity-test-device',
-        'identity-test-invalid-session-hash',
+        encode(sha256('identity-test-invalid-session-hash'::bytea), 'hex'),
         TIMESTAMPTZ '2026-01-02 12:00:00+00',
         TIMESTAMPTZ '2026-01-01 12:00:00+00'
     FROM core.user_account
@@ -140,7 +141,7 @@ INSERT INTO core.user_session (
 SELECT
     id,
     'identity-test-device-valid',
-    'identity-test-valid-session-hash'
+    encode(sha256('identity-test-valid-session-hash'::bytea), 'hex')
 FROM core.user_account
 WHERE email = 'identity-test-a@example.com';
 
@@ -152,7 +153,7 @@ BEGIN
         JOIN core.user_account AS u
           ON u.id = s.user_account_id
         WHERE u.email = 'identity-test-a@example.com'
-          AND s.session_token_hash = 'identity-test-valid-session-hash'
+          AND s.session_token_hash = encode(sha256('identity-test-valid-session-hash'::bytea), 'hex')
     ) THEN
         RAISE EXCEPTION 'FAIL: valid session was not persisted';
     END IF;

@@ -1,201 +1,110 @@
-# Talentra: Enterprise Talent & Gig Marketplace Platform
-**Database Engine**: PostgreSQL 17  
-**Architecture Paradigm**: Database-First Modular Monolith  
-**Scale Tested**: 10,000 Candidates, 1,000 Jobs, 50,000 Applications, 2,000 Gig Workers (Direct Measurement)  
-**Scale Extrapolated**: 10,000,000 Candidates, 1,000,000 Jobs, 100,000,000 Applications (Mathematical Proof)  
-**Test Suite**: 18 / 18 Suites Passing (**100% Green**)  
-**Data Quality Compliance**: 15 / 15 Rules Passing (**100% Compliant**)  
+# Talentra: Job Search and Demand Management Database
 
----
+PostgreSQL schema, test suite, data generator and design documentation for **Talentra**, a platform that unites permanent and contract recruitment with an on-demand gig marketplace. It was built to the *Talentra Database Design Hackathon* docket and is organised by the phases and steps of the Talencia Global Data-Driven Development Lifecycle.
 
-## 1. System Overview & Architecture
+| | |
+|:--|:--|
+| Engine | PostgreSQL 17 (target, used by CI and `docker-compose.yml`). Developed and verified locally on 16.15; see *Status* |
+| Schema | 39 migrations, 10 bounded schemas, 113 base tables and 9 partitions |
+| Tests | 40 suites: 35 SQL suites, a concurrency suite, a golden-dataset KPI suite, a benchmark-harness suite, an identifier-crypto suite and an NFR measurement run |
+| Documentation | `docs/`, one folder per lifecycle phase; start at [`docs/README.md`](docs/README.md) |
 
-Talentra is a production-grade database architecture uniting **full-time enterprise recruitment** and an **on-demand gig marketplace** into a unified talent graph. Built natively on **PostgreSQL 17**, Talentra replaces fragile distributed microservices with a **Database-First Modular Monolith** spanning **10 bounded schemas** and **95 tables/partitions**.
+## Status, stated plainly
 
-```
-                           +-------------------------------------------+
-                           |         TALENTRA POSTGRESQL 17            |
-                           |              DATA ENGINE                  |
-                           +-------------------------------------------+
-                                                 |
-         +---------------------------------------+---------------------------------------+
-         |                                       |                                       |
-  [core] Identity & RBAC                  [master] Canonical Taxonomies          [profile] Candidate Resumes
-  - user_account, role, perm              - country, city, skill, lang           - profile, skill, exp, edu
-         |                                       |                                       |
-  [recruitment] Full-Time Jobs            [gig] Marketplace Subsystem            [commercial] Licences & Wallets
-  - job_posting, candidate_app            - gig_worker, availability, assign     - subscription, wallet_ledger
-         |                                       |                                       |
-  [sourcing] Agency Consultants           [messaging] Localized Alerts           [audit] Compliance Ledgers
-  - consultant_policy, outreach           - ui_translation, notif_delivery       - audit_event, error_log
-         |                                       |                                       |
-         +---------------------------------------+---------------------------------------+
-                                                 |
-                                     [analytics] Star Schema Marts
-                                     - dim_date, dim_cand, fact_app
-```
+- **Verified (2026-10-28, PostgreSQL 17.11 in Docker):** all 39 migrations apply to an empty database; all 40 suites pass; the data validator passes 15 of 15 on a freshly seeded database; generated documents are identical on 16.15 and 17.11. Earlier, on 16.15: backup and restore round-trips with identical row counts and schema objects, and the docket's laptop scale (1M candidates, 5M applications, 11 GB) was loaded, validated, benchmarked, backed up and restored (see [`benchmarks/results/scale_comparison.md`](benchmarks/results/scale_comparison.md)).
+- **Not verified:** the CI workflow has not run on GitHub; the laptop-scale run was on 16.15 and before migrations 029 to 039; the 10M / 100M figures are a projection from two measured sizes, not a measurement.
+- **Known open items**, all listed in [`docs/lifecycle/step-map.md`](docs/lifecycle/step-map.md): no human has approved anything. Targets, retention periods and the column classification were set by the assistant under the owner's delegation and are recorded in [`docs/lifecycle/decision-log.md`](docs/lifecycle/decision-log.md); the tax-identifier encryption has no consuming application yet and the seed data uses a public development key; the CI workflow has not run on GitHub; availability, backup scheduling and notification sending need an operator.
 
----
-
-## 2. Key Technical Innovations
-
-1. **Unified Talent Graph**: Single user identity (`core.user_account`) seamlessly bridges permanent employment resumes (`profile.candidate_profile`) and freelance gig services (`gig.gig_worker_profile`) with zero synchronization lag.
-2. **Hardware-Level Calendar Non-Overlap**: Eliminates double-booking races using PostgreSQL `btree_gist` exclusion constraints:
-   ```sql
-   CONSTRAINT ex_gig_assignment_no_overlap
-   EXCLUDE USING gist (
-       gig_worker_profile_id WITH =,
-       daterange(assigned_start_date, assigned_end_date, '[]') WITH &&
-   )
-   WHERE (assignment_status = 'active');
-   ```
-3. **Strictly Append-Only Financial Ledgers**: Corporate credit movements (`commercial.wallet_ledger`) and compliance access logs (`audit.audit_event`) cannot be modified or deleted. Database triggers block `UPDATE`/`DELETE` and enforce explicit correction self-references.
-4. **Pessimistic Concurrency & Device Limits**: User login calls `core.create_session_with_device_limit`, acquiring a row-level lock (`FOR UPDATE`) on the user's licence seat to atomically enforce device quotas.
-5. **Declarative Range Partitioning**: High-velocity candidate applications (`recruitment.candidate_application_partitioned`) are partitioned quarterly by `RANGE (applied_at)`, pruning $>75\%$ of index scans.
-6. **Dynamic Multilingual UI Fallback**: Database-level translation engine (`messaging.get_ui_translation`) serves localized strings with automated fallback to default English in under 1.2 ms.
-
----
-
-## 3. Directory Layout
+## Layout
 
 ```
-talentra/
-├── db/
-│   ├── migrations/             # 19 Ordered PostgreSQL 17 Migration Scripts (001–019)
-│   └── queries/                # 12 Fixed Enterprise Benchmark Queries (01–12)
-├── tests/                      # 18 Test Files (100% Passing Test Harness)
-├── scripts/
-│   ├── generate_data.py        # High-Speed Bulk Streaming Synthetic Data Generator
-│   ├── validate_data.py        # Automated 10 Rule Groups Compliance Validator
-│   └── run_benchmarks.py       # Benchmark Profiler (p50/p95/p99 + Buffer Hits + Index Speedup)
-├── benchmarks/
-│   └── results/                # Output JSON and Markdown Benchmark Results
-├── docs/
-│   ├── architecture.md         # Comprehensive Modular Monolith Architecture Dossier
-│   ├── data-dictionary.md      # Tabular Dictionary with RG5 Nullability & RG6 Sensitivity
-│   ├── er-diagram.md           # Mermaid Relational Diagrams for all 10 Domains
-│   ├── integration-boundaries.md # 9 External Integration Boundaries Specification
-│   ├── threat-model.md         # STRIDE Threat Matrix, RBAC, RLS, and Audit Controls
-│   ├── performance-report.md   # Latency Baseline & Mathematical Extrapolation to 100M Rows
-│   ├── rule-compliance.md      # Rule Groups 1–10 Verification Evidence
-│   └── competitive-benchmark.md# Comparative Analysis vs Naukri, Monster, LinkedIn
-├── docker-compose.yml          # PostgreSQL 17 Container Orchestration
-└── README.md                   # Master Documentation
+db/
+  migrations/     001-039, applied in order
+  queries/        12 fixed benchmark queries
+  kpi/            16 KPI definitions (SQL), executed by tests and the KPI generator
+  seeds/          reference data and the golden dataset
+tests/            SQL suites, concurrency suite, golden-dataset KPI suite, benchmark-harness suite
+scripts/
+  generate_data.py       synthetic data (dev / medium / laptop scale, reproducible with --seed)
+  validate_data.py       data-quality validator
+  run_all_tests.py       runs every suite against any PostgreSQL
+  run_benchmarks.py      latency profile with p50/p95/p99 and cache-hit ratio
+  backup_restore.sh      backup, restore, verify, time against the RTO
+  lifecycle/             generators for the documents under docs/
+docs/                    one folder per lifecycle phase, plus gate-reviews and source
+.github/workflows/ci.yml migrations, tests, seed, validate, docs-up-to-date check on PostgreSQL 17
 ```
 
----
+## What the database enforces
 
-## 4. Quickstart Guide
+- **Identity and access.** One identity table feeds candidates, employers, recruiters, consultants and gig workers. Five `NOLOGIN` roles and row-level security on twelve tables isolate tenants and candidates: a recruiter sees only their organisation's jobs, wallet and applications; a blocked organisation cannot see the candidate; the organisation context is honoured only for active members. The application sets who is acting with `set_config('app.current_user_id', ...)` per transaction; with nothing set, a session sees only published jobs. Login order: look the credential up with `core.find_credential_for_login`, verify the hash in the application, set `app.current_user_id`, then call `core.create_session_with_device_limit`.
+- **Credentials.** Password hashes must be argon2id or bcrypt and session tokens must be SHA-256 hex, by `CHECK`. Support staff see accounts only through a masking view.
+- **No double-booking, no over-limit logins.** A `btree_gist` exclusion constraint rejects overlapping active gig assignments and overlapping subscription periods. Device limits are enforced at login under a row lock, and the refused attempt is audited. Both are proven under 10 parallel connections.
+- **Append-only history.** The wallet ledger, audit log, download and view history, application status history and error log reject `UPDATE`, `DELETE` and `TRUNCATE`, and the application role has no privilege to attempt them. A correction is a new row that points at the original.
+- **State machines.** Legal status moves live in `master.status_transition`; 12 entities (applications, jobs, accounts, gigs, payments, invoices, subscriptions, sourcing requests, tickets) reject any other move.
+- **Lifecycle.** Every business table carries `created_at/by` and `updated_at/by`, filled by one trigger. Nine entities are soft-deleted and exposed through `active_<table>` views. `audit.entity_lifecycle_policy` records how each table's rows leave, with proposed retention. `core.erase_user_account` implements the right to erasure.
+- **Classification.** Every column has a class (public, internal, personal, sensitive) and a protection status in `audit.column_classification`; a test fails when a new column has none.
+- **Analytics.** `analytics.refresh_reporting_marts()` loads the star schema from the operational tables, incrementally and idempotently, then refreshes the aggregates.
 
-### Prerequisites
-* Docker & Docker Compose
-* PostgreSQL 17 Client (`psql`)
-* Python 3.10+ with `psycopg2-binary`
+## Run it
 
-### 1. Launch PostgreSQL 17 Container
+You need PostgreSQL 16 or later with the `btree_gist` extension, `psql`, and Python 3.9+ with `psycopg2-binary` and `cryptography`. Docker is optional.
+
 ```bash
-docker-compose up -d
-```
-*Port*: `5432` | *Database*: `talentra` | *User*: `talentra_admin` | *Password*: (configured in `.env`)
-
-### 2. Apply Database Migrations (001 to 019)
-```powershell
-Get-ChildItem -Path "db/migrations/*.sql" | Sort-Object Name | ForEach-Object {
-    Write-Host "Applying $($_.Name)..."
-    Get-Content $_.FullName -Raw | docker exec -i talentra-postgres psql -U talentra_admin -d talentra
-}
+# 1. A database. With Docker (copy .env.example to .env and set POSTGRES_PASSWORD first):
+docker compose up -d
+# ...or point the standard libpq variables at any PostgreSQL you own:
+export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=talentra_admin PGDATABASE=talentra PGPASSWORD=...
 ```
 
-### 3. Run the Automated Test Suite (18 Test Suites)
-```powershell
-Get-ChildItem -Path "tests/*.sql" | Sort-Object Name | ForEach-Object {
-    Write-Host "Running $($_.Name)..."
-    Get-Content $_.FullName -Raw | docker exec -i talentra-postgres psql -U talentra_admin -d talentra
-}
-```
-*Expected Result*: **18 / 18 tests passing with zero errors.**
-
-### 4. Seed Synthetic Data
 ```bash
-# Seed Development Scale (~2K applications)
-python scripts/generate_data.py --scale dev
-
-# Seed Medium Operational Scale (~50K applications, 10K candidates, 2K gig workers)
-python scripts/generate_data.py --scale medium
-
-# Seed Full Laptop Benchmark Scale (1M candidates, 5M applications)
-python scripts/generate_data.py --scale laptop
+# 2. Apply every migration, in order
+for f in db/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -q -f "$f"; done
 ```
 
-### 5. Validate Rule Group Compliance (10 Rule Groups)
 ```bash
-python scripts/validate_data.py
-```
-*Expected Output*:
-```
-================================================================
- Talentra Comprehensive Data Quality & Compliance Validator
- Engine: PostgreSQL 17 | Rule Groups 1–10 Verification
-================================================================
- [PASS] RG1 | Table Naming (snake_case)
- [PASS] RG1 | Boolean Column Prefixes
- [PASS] RG2 | Surrogate Primary Keys
- [PASS] RG3 | RFC Lowercase Email Validation
- [PASS] RG3 | E.164 Phone Number Validation
- [PASS] RG3 | ISO 4217 Currency Standards
- [PASS] RG4 | Chronological Range Consistency
- [PASS] RG5 | Zero-Sentinel Value Rule
- [PASS] RG6 | Cryptographic Password Hashing (Argon2id)
- [PASS] RG7 | Wallet Ledger Anti-Tamper Trigger
- [PASS] RG7 | Financial Balance Reconciliation
- [PASS] RG8 | Multilingual Translation & English Fallback
- [PASS] RG9 | Concurrent Session Device Limit Enforcement
- [PASS] RG10 | Declarative Range Partitioning
- [PASS] RG10 | Temporal Exclusion Constraints
-----------------------------------------------------------------
- Summary: Passed: 15 | Failed: 0 | Warnings: 0 (100% Compliant)
-================================================================
+# 3. Run every test suite (SQL suites roll back; the Python suites use their own scratch database)
+python3 scripts/run_all_tests.py
 ```
 
-### 6. Run Fixed Query Benchmark Suite
 ```bash
-python scripts/run_benchmarks.py
+# 4. Seed realistic data: dev (500 candidates), medium (10,000), laptop (1,000,000)
+python3 scripts/generate_data.py --scale medium
+python3 scripts/validate_data.py
 ```
-*Outputs generated in `benchmarks/results/benchmark_results.json` and `benchmarks/results/benchmark_summary.md`.*
 
----
+Seeding a database that already holds candidates is refused, because a second run used to double everything. Re-create the database, or pass `--append` if you want a second copy.
 
-## 5. Fixed Query Benchmark Summary
+```bash
+# 5. Benchmarks, backup/restore, and regenerating the generated documents
+python3 scripts/run_benchmarks.py
+scripts/backup_restore.sh
+scripts/lifecycle/regenerate.sh
+```
 
-Direct execution measurements on PostgreSQL 17 over 10 timed iterations:
+To run the tests against the Docker container instead of a local `psql`, use `python3 scripts/run_all_tests.py --docker`.
 
-| Query | Workload Focus | p50 Latency | p95 Latency | Buffer Cache Hit |
-| :--- | :--- | :---: | :---: | :---: |
-| `01_candidate_multicriteria_search.sql` | Complex Multicriteria Candidate Filter | **30.87 ms** | 34.21 ms | 100.0% |
-| `02_job_feed_matching.sql` | Candidate Job Recommendation Feed | **13.29 ms** | 15.44 ms | 100.0% |
-| `03_recruiter_pipeline_funnel.sql` | Recruiter Application Funnel Aggregation | **1.01 ms** | 1.95 ms | 100.0% |
-| `04_concurrent_session_validation.sql` | Device Limit Entitlement at Login | **1.17 ms** | 2.15 ms | 100.0% |
-| `05_wallet_ledger_reconciliation.sql` | Append-Only Financial Balance Audit | **0.98 ms** | 2.03 ms | 100.0% |
-| `06_sourcing_outreach_unblocked.sql` | Outreach Candidate-Block Filter | **2.12 ms** | 3.10 ms | 100.0% |
-| `07_non_overlapping_gig_worker_search.sql` | Gig Availability & GiST Calendar Search | **11.07 ms** | 12.02 ms | 100.0% |
-| `08_profile_download_audit_log.sql` | Profile Download Access History | **1.23 ms** | 2.13 ms | 100.0% |
-| `09_high_volume_notification_write.sql` | User Communication Feed Read | **0.83 ms** | 2.02 ms | 100.0% |
-| `10_analytics_time_to_hire_kpi.sql` | Analytical Funnel Conversion by Industry | **3.26 ms** | 5.49 ms | 100.0% |
-| `11_gig_revenue_and_rating_summary.sql` | Gig Financial & Ratings Summary | **1.53 ms** | 3.83 ms | 100.0% |
-| `12_multilingual_ui_translation_lookup.sql`| Localized Key Resolution with Fallback | **1.16 ms** | 2.36 ms | 100.0% |
+## Performance
 
----
+Measured on one machine (macOS, 10 CPUs), PostgreSQL 16.15 with default settings, p50 over 10 timed runs. Two datasets, 100x apart: **medium** (10,000 candidates, 50,000 applications) and the docket's **laptop scale** (1,000,000 candidates, 100,000 jobs, 5,000,000 applications, 11 GB). Full table, method, cost of the fixes and a projection to the 10M / 100M target: [`benchmarks/results/scale_comparison.md`](benchmarks/results/scale_comparison.md).
 
-## 6. Panel Defense Talking Points & FAQ
+| Query | Medium | Laptop, as first written | Laptop, now |
+|:--|--:|--:|--:|
+| 01 Candidate multi-criteria search | 6.2 ms | 491 ms | 0.5 ms |
+| 02 Job feed matching | 1.4 ms | 50 ms | 0.4 ms |
+| 10 Time-to-hire KPI | 26 ms | 3,268 ms | 0.07 ms |
+| 07 Gig worker availability | 1.5 ms | 13.5 ms | 13.7 ms |
+| 11 Gig revenue and ratings | 0.2 ms | 8.6 ms | 8.7 ms |
+| the other 7 queries | 0.1 to 0.3 ms | 0.1 to 1 ms | 0.1 to 1 ms |
 
-### Q1: Why not microservices with independent databases?
-> **Answer**: Enterprise talent management requires atomic invariants across candidate status, corporate billing credits, and filled vacancy headcount. Distributed microservices require Two-Phase Commit (2PC) or asynchronous sagas that introduce eventual consistency lag and double-spend vulnerabilities. Talentra's modular monolith enforces strict schema isolation while maintaining sub-2ms ACID transaction guarantees.
+Three queries missed their proposed targets at laptop scale and were fixed by migration 028: Queries 01 and 02 by choosing the 50 rows to return before aggregating (Query 01 also needed one partial index), Query 10 by reading a summary that `analytics.refresh_reporting_marts()` rebuilds (about 3 s at this scale), so it is as fresh as the last refresh. Queries 01 and 02 return the same rows in the same order as before. The first thing expected to degrade at the full 10M / 100M target is the cost of rebuilding that summary, which grows with the number of events. The load of the laptop dataset takes 24 minutes; backup is 71 s and restore 224 s against a 900 s objective. The first version of these tables was measured on a dataset where five of the twelve queries returned no rows, and has been replaced.
 
-### Q2: How do you guarantee a gig worker isn't double-booked?
-> **Answer**: We do not rely on application-level checks. Talentra uses PostgreSQL's native `btree_gist` extension to enforce a physical exclusion constraint (`ex_gig_assignment_no_overlap`). Conflicting active date ranges (`daterange(start, end, '[]')`) are rejected directly by the relational storage engine.
+## Design notes
 
-### Q3: What happens when the database reaches 100M applications?
-> **Answer**: High-velocity application records are declaratively range-partitioned quarterly (`recruitment.candidate_application_partitioned`). B-Tree index depth scales logarithmically ($O(\log N)$), growing by only 1 page traversal level from 50K to 100M rows. Partition pruning restricts active hiring pipeline scans to active quarters, keeping the memory working set resident in RAM cache.
+**Why a single database and not services.** Hiring credits, wallet debits and application state must change together or not at all. In one PostgreSQL database that is one transaction. The concurrency suite shows it holding under contention: 10 parallel logins against a 2-device limit grant exactly 2, and 10 parallel wallet debits never overdraw.
 
-### Q4: Which query degrades first and why?
-> **Answer**: Query 01 (Candidate Multicriteria Sourcing Filter) degrades first. As candidates reach 10M and skill claims reach 60M, filtering by 3 common skills (`postgresql`, `python`, `docker`) matches $>3.5\text{M}$ rows, exceeding `work_mem` (64 MB) and triggering external merge disk sorts. Talentra mitigates this via covering indexes with `INCLUDE` clauses and pre-aggregated candidate search marts.
+**Where the gig marketplace lives.** Gigs have their own schema (profiles, availability, requests, assignments, ratings) instead of sharing the job and application tables, because their rules differ: a priced window instead of a vacancy, bids that flow one way, fulfilment handed to an external system, and a calendar that must never overlap. The cost is that reporting across both has to join two models; the analytics schema does that join once.
+
+**Partitioning.** `recruitment.candidate_application_partitioned` is range-partitioned by year on `applied_at`. The authoritative table is the unpartitioned `candidate_application`; the partitioned one is the scale-out path and no benchmark query uses it yet.
+
+**What to read next.** [`docs/lifecycle/step-map.md`](docs/lifecycle/step-map.md) for the status of all 46 lifecycle steps and 8 gates; [`docs/phase-2-model/11-rule-compliance.md`](docs/phase-2-model/11-rule-compliance.md) for the docket's ten rule groups with every deviation and its reason; [`docs/phase-2-model/12-threat-model.md`](docs/phase-2-model/12-threat-model.md) for the security design.

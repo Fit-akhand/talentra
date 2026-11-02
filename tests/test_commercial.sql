@@ -1,5 +1,6 @@
 -- Test suite: tests/test_commercial.sql
 -- Prerequisite: migrations 001 through 017 applied.
+-- Covers: BR-029, BR-030, SEC-005   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 

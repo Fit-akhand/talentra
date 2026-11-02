@@ -1,88 +1,74 @@
 #!/usr/bin/env python3
+"""Talentra automated test runner.
+
+Runs every SQL suite in tests/, the concurrency suite, the golden-dataset KPI suite and the
+benchmark-harness suite. The Python suites that write data build their own scratch database and
+drop it, so the target database is left as it was found.
+
+Connection (first match wins):
+  1. Standard libpq variables: PGHOST, PGPORT, PGUSER, PGDATABASE, PGPASSWORD  -> uses local `psql`
+  2. --docker [CONTAINER]  -> runs psql inside a container (default name: talentra-postgres)
+
+Exit status is 0 only if every suite passes. A SQL suite passes when psql exits 0 and prints no
+`ERROR:` and no `[FAIL]`/`FAIL:` marker.
 """
-Talentra Automated Test Runner
-Discovers and executes all 21 SQL test suites and the multi-threaded concurrency suite.
-Reports status, error details, and cumulative summary.
-"""
+import argparse, glob, os, subprocess, sys
 
-import os
-import sys
-import subprocess
-import glob
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+TESTS = os.path.join(ROOT, "tests")
 
-def run_all_tests():
-    test_dir = os.path.join(os.path.dirname(__file__), "..", "tests")
-    sql_files = sorted(glob.glob(os.path.join(test_dir, "*.sql")))
+def psql_cmd(args):
+    if args.docker:
+        return ["docker", "exec", "-i", "-e", "PGCLIENTENCODING=UTF8", args.docker, "psql", "-v", "ON_ERROR_STOP=0",
+                "-U", os.getenv("PGUSER", "talentra_admin"), "-d", os.getenv("PGDATABASE", "talentra")]
+    return ["psql", "-v", "ON_ERROR_STOP=0", "-X", "-q"]
 
-    print("======================================================================")
-    print("           TALENTRA AUTOMATED TEST SUITE EXECUTION                    ")
-    print("======================================================================")
-    print(f"Discovered {len(sql_files)} SQL test suites + 1 Concurrency test suite.\n")
+def run_sql(path, args):
+    with open(path, "rb") as f:
+        proc = subprocess.run(psql_cmd(args), input=f.read(), capture_output=True,
+                              env={**os.environ, "PGCLIENTENCODING": "UTF8"})
+    out = (proc.stdout + proc.stderr).decode("utf-8", errors="replace")
+    bad = proc.returncode != 0 or "ERROR:" in out or "[FAIL]" in out or "FAIL:" in out
+    return (not bad), out
 
-    passed_count = 0
-    failed_count = 0
-    failures = []
+def run_py(path):
+    env = dict(os.environ)
+    # python suites read POSTGRES_* / DB_*; map the libpq variables so one set works everywhere
+    for src, dst in (("PGHOST", "POSTGRES_HOST"), ("PGPORT", "POSTGRES_PORT"), ("PGUSER", "POSTGRES_USER"),
+                     ("PGDATABASE", "POSTGRES_DB"), ("PGPASSWORD", "POSTGRES_PASSWORD")):
+        if src in env: env.setdefault(dst, env[src])
+    proc = subprocess.run([sys.executable, path], capture_output=True, text=True, env=env)
+    return proc.returncode == 0, proc.stdout + proc.stderr
 
-    # 1. Run all SQL test suites
-    for sql_file in sql_files:
-        test_name = os.path.basename(sql_file)
-        try:
-            with open(sql_file, "r", encoding="utf-8") as f:
-                content = f.read()
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--docker", nargs="?", const="talentra-postgres", default=None, metavar="CONTAINER")
+    ap.add_argument("--skip-db-python", action="store_true", help="skip suites that need a database connection from Python")
+    args = ap.parse_args()
 
-            proc = subprocess.run(
-                ["docker", "exec", "-i", "-e", "PGCLIENTENCODING=UTF8", "talentra-postgres", "psql", "-U", "talentra_admin", "-d", "talentra"],
-                input=content.encode("utf-8"),
-                capture_output=True,
-                check=False
-            )
+    sql = sorted(glob.glob(os.path.join(TESTS, "*.sql")))
+    print("=" * 70 + "\n TALENTRA TEST RUN\n" + "=" * 70)
+    results = []
+    for p in sql:
+        ok, out = run_sql(p, args); results.append((os.path.basename(p), ok, out))
+        print(f" [{'PASS' if ok else 'FAIL'}] {os.path.basename(p)}")
+    for name, needs_db in (("test_concurrency.py", True), ("test_golden_kpis.py", True), ("test_benchmark_harness.py", False), ("test_identifier_crypto.py", False)):
+        p = os.path.join(TESTS, name)
+        if not os.path.exists(p) or (needs_db and args.skip_db_python): continue
+        ok, out = run_py(p); results.append((name, ok, out))
+        print(f" [{'PASS' if ok else 'FAIL'}] {name}")
 
-            output = (proc.stdout + proc.stderr).decode("utf-8", errors="replace")
-            if "ERROR:" in output or proc.returncode != 0:
-                print(f" [FAIL] {test_name}")
-                failed_count += 1
-                failures.append((test_name, output))
-            else:
-                print(f" [PASS] {test_name}")
-                passed_count += 1
-        except Exception as e:
-            print(f" [ERROR] {test_name}: {e}")
-            failed_count += 1
-            failures.append((test_name, str(e)))
+    if not args.skip_db_python and not args.docker:
+        # NFR suite: write latency, 500-session concurrency, master lookups and a 50,000-application pipeline against the proposed targets
+        nfr = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_nfr_checks.py")
+        ok, out = run_py(nfr); results.append(("run_nfr_checks.py (NFR-003, 005, 006, 009)", ok, out))
+        print(f" [{'PASS' if ok else 'FAIL'}] run_nfr_checks.py (NFR-003, 005, 006, 009)")
 
-    # 2. Run Concurrency Suite
-    print("\n--- Running Multi-Threaded Concurrency Test Suite ---")
-    py_concurrency = os.path.join(test_dir, "test_concurrency.py")
-    if os.path.exists(py_concurrency):
-        proc_py = subprocess.run(
-            [sys.executable, py_concurrency],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if proc_py.returncode == 0:
-            print(" [PASS] test_concurrency.py (Multi-threaded race conditions)")
-            passed_count += 1
-        else:
-            print(" [FAIL] test_concurrency.py")
-            print(proc_py.stdout + proc_py.stderr)
-            failed_count += 1
-            failures.append(("test_concurrency.py", proc_py.stdout + proc_py.stderr))
-
-    total = passed_count + failed_count
-    print("\n======================================================================")
-    print(f" TEST RUN SUMMARY: {passed_count}/{total} Passed ({(passed_count/total)*100:.1f}%)")
-    print("======================================================================")
-
-    if failures:
-        print("\nFailures:")
-        for name, err in failures:
-            print(f"\n--- Failure in {name} ---")
-            print(err[:500])
-        sys.exit(1)
-    else:
-        print("\nAll tests executed with 100% green status across all schemas and rules!")
-        sys.exit(0)
+    failed = [r for r in results if not r[1]]
+    print("=" * 70 + f"\n {len(results) - len(failed)}/{len(results)} suites passed\n" + "=" * 70)
+    for name, _, out in failed:
+        print(f"\n--- {name} ---\n{out[-1500:]}")
+    sys.exit(1 if failed else 0)
 
 if __name__ == "__main__":
-    run_all_tests()
+    main()

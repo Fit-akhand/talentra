@@ -1,4 +1,5 @@
 
+-- Covers: BR-011, REQ-015   (generated from the registers by scripts/lifecycle/tag_tests.py)
 BEGIN;
 
 DO $$

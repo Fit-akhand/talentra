@@ -1,5 +1,6 @@
 -- Test suite: tests/test_organization_extensions.sql
 -- Prerequisite: migrations 001 through 013 applied.
+-- Covers: BR-011, REQ-015, REQ-016   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 
@@ -169,7 +170,8 @@ BEGIN
             organization_id,
             country_id,
             identifier_type,
-            identifier_value,
+            identifier_ciphertext,
+            identifier_bidx,
             verification_status,
             verified_at
         )
@@ -177,7 +179,8 @@ BEGIN
             v_parent_org_id,
             v_country_id,
             'gstin',
-            '29AAAAA0000A1Z5',
+            decode(repeat('ab', 40), 'hex'),
+            sha256('test-bidx-1'),
             'verified',
             NULL -- Must fail: verified status requires verified_at timestamp
         );
@@ -195,7 +198,8 @@ BEGIN
         organization_id,
         country_id,
         identifier_type,
-        identifier_value,
+        identifier_ciphertext,
+        identifier_bidx,
         verification_status,
         verified_at,
         verified_by_user_account_id
@@ -204,7 +208,8 @@ BEGIN
         v_parent_org_id,
         v_country_id,
         'gstin',
-        '29AAAAA0000A1Z5',
+        decode(repeat('ab', 40), 'hex'),
+        sha256('test-bidx-1'),
         'verified',
         CURRENT_TIMESTAMP,
         v_verifier_id

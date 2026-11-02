@@ -5,9 +5,11 @@ Verifies:
 2. btree_gist exclusion constraints on overlapping gig assignments under race conditions.
 3. Transactional atomic balance updates & append-only wallet ledgers under concurrent debits.
 """
+# Covers: BR-002, BR-025, BR-031, REQ-004, REQ-032, SEC-004, SEC-008   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 import os
 import sys
+import hashlib
 import uuid
 import random
 import threading
@@ -15,11 +17,11 @@ import psycopg2
 from psycopg2 import pool
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_NAME = os.getenv("DB_NAME", "talentra")
-DB_USER = os.getenv("DB_USER", "talentra_admin")
-DB_PASS = os.getenv("DB_PASSWORD", "354vctrho9t769874t8B*^&$%&**tf2eej2rh")
+DB_HOST = os.getenv("DB_HOST") or os.getenv("PGHOST", "127.0.0.1")
+DB_PORT = int(os.getenv("DB_PORT") or os.getenv("PGPORT", "5432"))
+DB_NAME = os.getenv("DB_NAME") or os.getenv("PGDATABASE", "talentra")
+DB_USER = os.getenv("DB_USER") or os.getenv("PGUSER", "talentra_admin")
+DB_PASS = os.getenv("DB_PASSWORD") or os.getenv("PGPASSWORD")
 
 def get_connection():
     return psycopg2.connect(
@@ -80,7 +82,7 @@ def test_concurrent_device_logins():
         t_conn.autocommit = True
         t_cur = t_conn.cursor()
         device_id = f"device_thread_{thread_idx}_{uuid.uuid4().hex[:6]}"
-        token_hash = f"sess_token_hash_{thread_idx}_{uuid.uuid4().hex[:8]}"
+        token_hash = hashlib.sha256(f"sess_token_hash_{thread_idx}_{uuid.uuid4().hex}".encode()).hexdigest()
         try:
             t_cur.execute(
                 "SELECT core.create_session_with_device_limit(%s, %s, %s, %s, 'mobile', '127.0.0.1');",
@@ -207,6 +209,11 @@ def test_concurrent_gig_assignments():
         except psycopg2.errors.ExclusionViolation as ex:
             t_conn.close()
             return {"thread": idx, "success": False, "exclusion_caught": True}
+        except psycopg2.errors.DeadlockDetected as ex:
+            # Concurrent inserts that conflict on an EXCLUDE constraint can deadlock instead of raising 23P01. Either way the
+            # database refused the second booking; an application retries a deadlock. It is a rejection, not a double booking.
+            t_conn.close()
+            return {"thread": idx, "success": False, "deadlock_caught": True}
         except Exception as e:
             t_conn.close()
             return {"thread": idx, "success": False, "other_error": str(e)}
@@ -218,13 +225,16 @@ def test_concurrent_gig_assignments():
 
     successes = sum(1 for r in results if r.get("success"))
     exclusions = sum(1 for r in results if r.get("exclusion_caught"))
+    deadlocks = sum(1 for r in results if r.get("deadlock_caught"))
 
     print(f"Total concurrent assignment attempts on overlapping dates: {num_threads}")
     print(f"Successful bookings: {successes} (Expected: 1)")
-    print(f"Blocked by ex_gig_assignment_no_overlap: {exclusions} (Expected: {num_threads - 1})")
+    print(f"Blocked by ex_gig_assignment_no_overlap: {exclusions}, refused by deadlock detection: {deadlocks} (together expected: {num_threads - 1})")
 
     assert successes == 1, f"Expected exactly 1 assignment to succeed, got {successes}"
-    assert exclusions == num_threads - 1, f"Expected {num_threads - 1} exclusion rejections, got {exclusions}"
+    assert exclusions + deadlocks == num_threads - 1, (
+        f"Expected {num_threads - 1} rejections by the database, got {exclusions} exclusion + {deadlocks} deadlock; "
+        f"others: {[r.get('other_error') for r in results if r.get('other_error')]}")
     print("PASS: btree_gist exclusion constraint successfully prevented double booking under race conditions!")
 
 
@@ -358,14 +368,99 @@ def test_concurrent_wallet_debits():
     print("PASS: Atomic debit serialization and append-only ledger consistency 100% verified!")
 
 
+def test_concurrent_wallet_function():
+    print("\n--- Test 4: Concurrent Debits through commercial.post_wallet_entry (WF-14, migration 036) ---")
+    conn = get_connection(); conn.autocommit = True; cur = conn.cursor()
+    cur.execute("INSERT INTO core.user_account (email, account_status) VALUES (%s, 'active') RETURNING id;", (f"walletfn_{uuid.uuid4().hex[:8]}@example.com",))
+    user_id = cur.fetchone()[0]
+    cur.execute("INSERT INTO recruitment.organization (name, slug, organization_type, created_by_user_account_id) VALUES (%s, %s, 'employer', %s) RETURNING id;",
+                (f"WalletFn Org {uuid.uuid4().hex[:6]}", f"walletfn-{uuid.uuid4().hex[:8]}", user_id))
+    org_id = cur.fetchone()[0]
+    cur.execute("INSERT INTO recruitment.organization_member (organization_id, user_account_id, organization_role, membership_status, joined_at) VALUES (%s, %s, 'recruiter', 'active', now());", (org_id, user_id))
+    cur.execute("INSERT INTO commercial.wallet (organization_id, balance, currency_code) VALUES (%s, 0.00, 'USD') RETURNING id;", (org_id,))
+    wallet_id = cur.fetchone()[0]
+    cur.execute("SELECT set_config('app.current_user_id', %s, false), set_config('app.current_org_id', %s, false)", (str(user_id), str(org_id)))
+    cur.execute("SELECT commercial.post_wallet_entry(%s, 'credit', 100.00, 'recharge')", (wallet_id,))
+    conn.close()
+
+    num_threads, amount = 40, 15.00
+
+    def attempt(idx):
+        c = get_connection(); c.autocommit = True; k = c.cursor()
+        try:
+            k.execute("SELECT set_config('app.current_user_id', %s, false), set_config('app.current_org_id', %s, false)", (str(user_id), str(org_id)))
+            k.execute("SELECT commercial.post_wallet_entry(%s, 'debit', %s, 'profile_download', %s)", (wallet_id, amount, idx))
+            return "ok"
+        except psycopg2.errors.CheckViolation:
+            return "refused"
+        except Exception as e:
+            return f"error: {e}"
+        finally:
+            c.close()
+
+    with ThreadPoolExecutor(max_workers=num_threads) as ex:
+        results = list(ex.map(attempt, range(num_threads)))
+    ok, refused = results.count("ok"), results.count("refused")
+    print(f"{num_threads} concurrent debits of ${amount}: {ok} succeeded (expected 6), {refused} refused (expected {num_threads - 6})")
+    assert ok == 6 and refused == num_threads - 6, f"unexpected outcomes: {[r for r in results if r not in ('ok', 'refused')] or (ok, refused)}"
+
+    v = get_connection(); k = v.cursor()
+    k.execute("SELECT balance FROM commercial.wallet WHERE id = %s;", (wallet_id,)); balance = float(k.fetchone()[0])
+    k.execute("SELECT COALESCE(SUM(CASE WHEN entry_type IN ('credit','correction_credit') THEN amount ELSE -amount END), 0), count(*) FROM commercial.wallet_ledger WHERE wallet_id = %s;", (wallet_id,))
+    ledger, n = k.fetchone(); ledger = float(ledger)
+    k.execute("SELECT bool_and(balance_after >= 0) FROM commercial.wallet_ledger WHERE wallet_id = %s;", (wallet_id,)); never_negative = k.fetchone()[0]
+    v.close()
+    print(f"Final balance ${balance:.2f}, ledger sum ${ledger:.2f}, ledger rows {n} (expected 7)")
+    assert abs(balance - 10.00) < 0.001 and abs(ledger - balance) < 0.001 and n == 7 and never_negative
+    print("PASS: the wallet function serialises concurrent debits; balance equals the ledger; no overdraft")
+
+
+def _admin_connection():
+    return psycopg2.connect(host=DB_HOST, port=DB_PORT, user=DB_USER, password=DB_PASS, dbname="postgres")
+
+
+def create_scratch_database():
+    """Create a throwaway database with every migration applied.
+
+    The ledger and audit tables are append-only, so this suite cannot delete what it writes.
+    Running it in its own database keeps the main database clean and the suite re-runnable.
+    """
+    global DB_NAME
+    scratch = f"talentra_conc_{uuid.uuid4().hex[:8]}"
+    admin = _admin_connection(); admin.autocommit = True
+    admin.cursor().execute(f'CREATE DATABASE "{scratch}"')
+    admin.close()
+    DB_NAME = scratch
+    conn = get_connection(); conn.autocommit = True
+    mig_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "migrations")
+    for name in sorted(os.listdir(mig_dir)):
+        if name.endswith(".sql"):
+            with open(os.path.join(mig_dir, name), encoding="utf-8") as f:
+                conn.cursor().execute(f.read())
+    conn.close()
+    return scratch
+
+
+def drop_scratch_database(scratch):
+    admin = _admin_connection(); admin.autocommit = True
+    cur = admin.cursor()
+    cur.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid()", (scratch,))
+    cur.execute(f'DROP DATABASE IF EXISTS "{scratch}"')
+    admin.close()
+
+
 if __name__ == "__main__":
     print("======================================================================")
     print("   Talentra High-Concurrency Multi-Threaded Verification Harness")
     print("======================================================================")
+    scratch = None
     try:
+        scratch = create_scratch_database()
+        print(f"Using scratch database {scratch} (dropped on exit)")
         test_concurrent_device_logins()
         test_concurrent_gig_assignments()
         test_concurrent_wallet_debits()
+        test_concurrent_wallet_function()
         print("\n======================================================================")
         print("   ALL CONCURRENCY AND RACE-CONDITION TESTS PASSED (100% GREEN)       ")
         print("======================================================================")
@@ -378,3 +473,6 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         sys.exit(2)
+    finally:
+        if scratch:
+            drop_scratch_database(scratch)

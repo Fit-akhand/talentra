@@ -1,5 +1,6 @@
 -- Test suite: tests/test_job_questionnaire.sql
 -- Prerequisite: migrations 001 through 011 applied.
+-- Covers: BR-013, REQ-018   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 

@@ -1,4 +1,5 @@
 -- Test suite: tests/test_messaging.sql
+-- Covers: REQ-007, NFR-008, FEAT-033, FEAT-034, FEAT-042
 -- Prerequisite: migrations 001 through 018 applied.
 
 BEGIN;
@@ -213,14 +214,16 @@ BEGIN
         referred_email,
         referral_code,
         status,
-        reward_amount
+        reward_amount,
+        currency_code
     )
     VALUES (
         v_user_id,
         'colleague@example.com',
         'REF-ALEX-2026',
         'invited',
-        50.00
+        50.00,
+        'USD'
     )
     RETURNING id INTO v_referral_id;
 

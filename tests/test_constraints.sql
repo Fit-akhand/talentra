@@ -1,5 +1,6 @@
 -- Test: test_constraints.sql
 -- Domain: All Schemas / Rule Group 3 & 4
+-- Covers: DATA-001, DATA-004   (generated from the registers by scripts/lifecycle/tag_tests.py)
 -- Purpose: Verify domain standard check constraints, regexes, temporal ranges, and uniqueness rules.
 -- Engine: PostgreSQL 17
 
@@ -14,12 +15,55 @@ DECLARE
     v_work_id BIGINT;
     v_org_id BIGINT;
     v_err_caught BOOLEAN := FALSE;
+    v_country_id BIGINT;
+    v_state_id BIGINT;
 BEGIN
     RAISE NOTICE '=== Running Domain Standard Constraints Tests ===';
 
     SELECT id INTO v_city_id FROM master.city LIMIT 1;
     SELECT id INTO v_emp_id FROM master.employment_type LIMIT 1;
     SELECT id INTO v_work_id FROM master.work_type LIMIT 1;
+
+    IF v_city_id IS NULL THEN
+        INSERT INTO master.country (iso_alpha2, iso_alpha3, name)
+        VALUES ('TC', 'TCC', 'Test Constraint Country')
+        ON CONFLICT (iso_alpha2) DO UPDATE SET name = EXCLUDED.name
+        RETURNING id INTO v_country_id;
+
+        IF v_country_id IS NULL THEN
+            SELECT id INTO v_country_id FROM master.country WHERE iso_alpha2 = 'TC';
+        END IF;
+
+        INSERT INTO master.state (country_id, name, subdivision_code)
+        VALUES (v_country_id, 'Test Constraint State', 'TC-01')
+        RETURNING id INTO v_state_id;
+
+        IF v_state_id IS NULL THEN
+            SELECT id INTO v_state_id FROM master.state WHERE country_id = v_country_id LIMIT 1;
+        END IF;
+
+        INSERT INTO master.city (state_id, name)
+        VALUES (v_state_id, 'Test Constraint City')
+        RETURNING id INTO v_city_id;
+
+        IF v_city_id IS NULL THEN
+            SELECT id INTO v_city_id FROM master.city WHERE state_id = v_state_id LIMIT 1;
+        END IF;
+    END IF;
+
+    IF v_emp_id IS NULL THEN
+        INSERT INTO master.employment_type (code, name)
+        VALUES ('test_full_time', 'Test Full-Time')
+        ON CONFLICT (code) DO NOTHING;
+        SELECT id INTO v_emp_id FROM master.employment_type WHERE code = 'test_full_time';
+    END IF;
+
+    IF v_work_id IS NULL THEN
+        INSERT INTO master.work_type (code, name)
+        VALUES ('test_remote', 'Test Remote')
+        ON CONFLICT (code) DO NOTHING;
+        SELECT id INTO v_work_id FROM master.work_type WHERE code = 'test_remote';
+    END IF;
 
     -- 1. Test Email Format Constraint (RFC check, reject invalid or uppercase)
     v_err_caught := FALSE;

@@ -1,5 +1,6 @@
 -- Test suite: tests/test_candidate_application.sql
 -- Prerequisite: migrations 001 through 009 have been applied.
+-- Covers: BR-014, BR-015, BR-016, REQ-019, REQ-020, REQ-021, REQ-022   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 

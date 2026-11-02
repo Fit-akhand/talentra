@@ -1,0 +1,148 @@
+{
+  "KPI-001": [
+    {
+      "applications_per_published_job": "3.00"
+    }
+  ],
+  "KPI-002": [
+    {
+      "application_status": "applied",
+      "applications": 2,
+      "pct_of_all": "33.33"
+    },
+    {
+      "application_status": "joined",
+      "applications": 2,
+      "pct_of_all": "33.33"
+    },
+    {
+      "application_status": "rejected",
+      "applications": 1,
+      "pct_of_all": "16.67"
+    },
+    {
+      "application_status": "withdrawn",
+      "applications": 1,
+      "pct_of_all": "16.67"
+    }
+  ],
+  "KPI-003": [
+    {
+      "avg_hours_applied_to_joined": "360.00",
+      "joined_applications": 2
+    }
+  ],
+  "KPI-004": [
+    {
+      "offer_to_join_pct": "66.67"
+    }
+  ],
+  "KPI-005": [
+    {
+      "avg_profile_completeness_pct": "85.00"
+    }
+  ],
+  "KPI-006": [
+    {
+      "industry": "Finance and Banking",
+      "published_jobs": 1
+    },
+    {
+      "industry": "Information Technology",
+      "published_jobs": 1
+    }
+  ],
+  "KPI-007": [
+    {
+      "unreconciled_wallets": 1
+    }
+  ],
+  "KPI-008": [
+    {
+      "entry_type": "credit",
+      "reference_type": "recharge",
+      "currency_code": "USD",
+      "entries": 2,
+      "total_amount": "1400.00"
+    },
+    {
+      "entry_type": "debit",
+      "reference_type": "profile_download",
+      "currency_code": "USD",
+      "entries": 1,
+      "total_amount": "10.00"
+    }
+  ],
+  "KPI-009": [
+    {
+      "award_rate_of_closed_requests_pct": "80.00",
+      "total_requests": 6
+    }
+  ],
+  "KPI-010": [
+    {
+      "avg_rating": "4.50",
+      "ratings": 2
+    }
+  ],
+  "KPI-011": [
+    {
+      "delivered_pct_of_attempted": "66.67",
+      "total_deliveries": 7
+    }
+  ],
+  "KPI-012": [
+    {
+      "accepted_pct": "50.00",
+      "submissions": 4
+    }
+  ],
+  "KPI-013": [
+    {
+      "response_pct": "50.00",
+      "recipients": 5
+    }
+  ],
+  "KPI-014": [
+    {
+      "priority": "high",
+      "open_tickets": 2
+    },
+    {
+      "priority": "low",
+      "open_tickets": 1
+    }
+  ],
+  "KPI-015": [
+    {
+      "device_limit_audit_events": 1
+    }
+  ],
+  "KPI-016": [
+    {
+      "currency_code": "USD",
+      "downloads": 1,
+      "credits_spent": "10.00"
+    }
+  ],
+  "Q10": [
+    {
+      "industry_name": "Information Technology",
+      "total_applications": 3,
+      "shortlisted_count": 2,
+      "interviewed_count": 1,
+      "offered_count": 1,
+      "hired_count": 1,
+      "avg_time_to_hire_hours": "480.00"
+    },
+    {
+      "industry_name": "Finance and Banking",
+      "total_applications": 3,
+      "shortlisted_count": 2,
+      "interviewed_count": 2,
+      "offered_count": 2,
+      "hired_count": 1,
+      "avg_time_to_hire_hours": "240.00"
+    }
+  ]
+}

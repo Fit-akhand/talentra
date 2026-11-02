@@ -1,5 +1,7 @@
 -- Test suite: tests/test_analytics.sql
 -- Prerequisite: migrations 001 through 019 applied.
+-- Covers: OPS-005, OPS-009   (generated from the registers by scripts/lifecycle/tag_tests.py)
+-- Fixture ids are deliberately huge (9xxxxxxx): they must not collide with ids the data generator assigns.
 
 BEGIN;
 
@@ -35,7 +37,7 @@ BEGIN
         is_current
     )
     VALUES (
-        1001,
+        91001001,
         'Analytics Tech Corp',
         'employer',
         'USA',
@@ -56,7 +58,7 @@ BEGIN
         is_current
     )
     VALUES (
-        2001,
+        92001001,
         'San Francisco',
         5.5,
         90.00,
@@ -81,7 +83,7 @@ BEGIN
         published_date_key
     )
     VALUES (
-        3001,
+        93001001,
         v_org_key,
         'Principal Data Warehouse Architect',
         'Data Architect',
@@ -108,9 +110,9 @@ BEGIN
         is_terminal_state
     )
     VALUES
-        (5001, 20260116, v_job_key, v_candidate_key, v_org_key, NULL, 'applied', 0.0, FALSE),
-        (5001, 20260118, v_job_key, v_candidate_key, v_org_key, 'applied', 'shortlisted', 48.0, FALSE),
-        (5001, 20260125, v_job_key, v_candidate_key, v_org_key, 'shortlisted', 'joined', 168.0, TRUE);
+        (95001001, 20260116, v_job_key, v_candidate_key, v_org_key, NULL, 'applied', 0.0, FALSE),
+        (95001001, 20260118, v_job_key, v_candidate_key, v_org_key, 'applied', 'shortlisted', 48.0, FALSE),
+        (95001001, 20260125, v_job_key, v_candidate_key, v_org_key, 'shortlisted', 'joined', 168.0, TRUE);
 
     INSERT INTO analytics.fact_gig_performance (
         gig_assignment_id,
@@ -124,7 +126,7 @@ BEGIN
         assignment_status
     )
     VALUES (
-        6001,
+        96001001,
         v_org_key,
         20260210,
         4000.00,
@@ -147,7 +149,7 @@ BEGIN
         recorded_timestamp
     )
     VALUES (
-        7001,
+        97001001,
         v_org_key,
         20260115,
         'credit',
@@ -169,8 +171,8 @@ BEGIN
         updated_by_user_account_id
     )
     VALUES (
-        2001,
-        3001,
+        92001001,
+        93001001,
         'applied',
         'direct',
         '2026-06-15 10:30:00+00',
@@ -223,13 +225,13 @@ BEGIN
     RAISE NOTICE 'PASS: materialized reporting views refreshed and verified with aggregated KPIs';
 
     -- Cleanup test fixtures
-    DELETE FROM analytics.fact_application_event WHERE candidate_application_id = 5001;
-    DELETE FROM analytics.fact_gig_performance WHERE gig_assignment_id = 6001;
-    DELETE FROM analytics.fact_wallet_transaction WHERE wallet_id = 7001;
-    DELETE FROM analytics.dim_job_posting WHERE job_posting_id = 3001;
-    DELETE FROM analytics.dim_candidate WHERE candidate_profile_id = 2001;
-    DELETE FROM analytics.dim_organization WHERE organization_id = 1001;
-    DELETE FROM recruitment.candidate_application_partitioned WHERE candidate_profile_id = 2001;
+    DELETE FROM analytics.fact_application_event WHERE candidate_application_id = 95001001;
+    DELETE FROM analytics.fact_gig_performance WHERE gig_assignment_id = 96001001;
+    DELETE FROM analytics.fact_wallet_transaction WHERE wallet_id = 97001001;
+    DELETE FROM analytics.dim_job_posting WHERE job_posting_id = 93001001;
+    DELETE FROM analytics.dim_candidate WHERE candidate_profile_id = 92001001;
+    DELETE FROM analytics.dim_organization WHERE organization_id = 91001001;
+    DELETE FROM recruitment.candidate_application_partitioned WHERE candidate_profile_id = 92001001;
 END;
 $$;
 

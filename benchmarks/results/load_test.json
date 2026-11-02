@@ -1,0 +1,208 @@
+{
+  "measured_at": "2026-10-27T21:46:11Z",
+  "engine": "PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2)",
+  "max_connections": 100,
+  "cpus": 10,
+  "dataset": "medium seed (10,000 candidates, 1,000 jobs, 50,000 applications)",
+  "mix": {
+    "search": 25,
+    "feed": 25,
+    "funnel": 10,
+    "apply": 15,
+    "wallet_debit": 10,
+    "login": 15
+  },
+  "levels": [
+    {
+      "clients": 1,
+      "seconds": 8,
+      "operations": 14444,
+      "per_second": 1805.5,
+      "errors": 0,
+      "error_codes": [],
+      "ops": {
+        "feed": {
+          "n": 3582,
+          "p50_ms": 0.72,
+          "p95_ms": 0.77,
+          "p99_ms": 0.83
+        },
+        "login": {
+          "n": 2143,
+          "p50_ms": 0.43,
+          "p95_ms": 0.48,
+          "p99_ms": 0.76
+        },
+        "funnel": {
+          "n": 1451,
+          "p50_ms": 0.32,
+          "p95_ms": 0.38,
+          "p99_ms": 0.43
+        },
+        "apply": {
+          "n": 2159,
+          "p50_ms": 0.4,
+          "p95_ms": 0.43,
+          "p99_ms": 0.65
+        },
+        "search": {
+          "n": 3631,
+          "p50_ms": 0.74,
+          "p95_ms": 0.79,
+          "p99_ms": 0.92
+        },
+        "wallet_debit": {
+          "n": 1478,
+          "p50_ms": 0.42,
+          "p95_ms": 0.47,
+          "p99_ms": 0.82
+        }
+      }
+    },
+    {
+      "clients": 8,
+      "seconds": 8,
+      "operations": 67429,
+      "per_second": 8428.6,
+      "errors": 0,
+      "error_codes": [],
+      "ops": {
+        "wallet_debit": {
+          "n": 6798,
+          "p50_ms": 0.83,
+          "p95_ms": 1.39,
+          "p99_ms": 2.04
+        },
+        "feed": {
+          "n": 16917,
+          "p50_ms": 0.93,
+          "p95_ms": 1.48,
+          "p99_ms": 1.91
+        },
+        "login": {
+          "n": 9952,
+          "p50_ms": 0.84,
+          "p95_ms": 1.41,
+          "p99_ms": 2.07
+        },
+        "apply": {
+          "n": 10107,
+          "p50_ms": 0.74,
+          "p95_ms": 1.27,
+          "p99_ms": 1.89
+        },
+        "funnel": {
+          "n": 6751,
+          "p50_ms": 0.53,
+          "p95_ms": 0.92,
+          "p99_ms": 1.27
+        },
+        "search": {
+          "n": 16904,
+          "p50_ms": 1.11,
+          "p95_ms": 1.82,
+          "p99_ms": 2.3
+        }
+      }
+    },
+    {
+      "clients": 32,
+      "seconds": 8,
+      "operations": 86165,
+      "per_second": 10770.6,
+      "errors": 0,
+      "error_codes": [],
+      "ops": {
+        "search": {
+          "n": 21520,
+          "p50_ms": 2.58,
+          "p95_ms": 5.88,
+          "p99_ms": 9.07
+        },
+        "apply": {
+          "n": 12992,
+          "p50_ms": 2.59,
+          "p95_ms": 6.16,
+          "p99_ms": 8.86
+        },
+        "wallet_debit": {
+          "n": 8614,
+          "p50_ms": 3.2,
+          "p95_ms": 6.88,
+          "p99_ms": 9.92
+        },
+        "feed": {
+          "n": 21593,
+          "p50_ms": 2.26,
+          "p95_ms": 5.32,
+          "p99_ms": 8.32
+        },
+        "funnel": {
+          "n": 8652,
+          "p50_ms": 1.54,
+          "p95_ms": 4.0,
+          "p99_ms": 6.16
+        },
+        "login": {
+          "n": 12794,
+          "p50_ms": 3.25,
+          "p95_ms": 6.97,
+          "p99_ms": 10.01
+        }
+      }
+    },
+    {
+      "clients": 64,
+      "seconds": 8,
+      "operations": 84136,
+      "per_second": 10517.0,
+      "errors": 0,
+      "error_codes": [],
+      "ops": {
+        "feed": {
+          "n": 21048,
+          "p50_ms": 3.9,
+          "p95_ms": 11.83,
+          "p99_ms": 22.97
+        },
+        "wallet_debit": {
+          "n": 8354,
+          "p50_ms": 7.24,
+          "p95_ms": 17.41,
+          "p99_ms": 26.65
+        },
+        "apply": {
+          "n": 12668,
+          "p50_ms": 4.29,
+          "p95_ms": 14.44,
+          "p99_ms": 23.43
+        },
+        "search": {
+          "n": 21173,
+          "p50_ms": 4.31,
+          "p95_ms": 13.59,
+          "p99_ms": 26.87
+        },
+        "login": {
+          "n": 12484,
+          "p50_ms": 7.45,
+          "p95_ms": 18.5,
+          "p99_ms": 30.52
+        },
+        "funnel": {
+          "n": 8409,
+          "p50_ms": 2.86,
+          "p95_ms": 8.54,
+          "p99_ms": 14.77
+        }
+      }
+    }
+  ],
+  "integrity_after": {
+    "largest_wallet_minus_ledger_difference": 0.0,
+    "sessions_written": 31683,
+    "users_over_device_limit": 0
+  },
+  "latency_rises_at_clients": 32,
+  "clean": true
+}

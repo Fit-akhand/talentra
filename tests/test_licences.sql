@@ -1,5 +1,6 @@
 -- Test suite: tests/test_licences.sql
 -- Prerequisite: migrations 001 through 015 applied.
+-- Covers: BR-002, BR-003, OPS-003, REQ-003, REQ-004, REQ-005, REQ-006, SEC-008   (generated from the registers by scripts/lifecycle/tag_tests.py)
 
 BEGIN;
 
@@ -104,7 +105,7 @@ BEGIN
     v_session1_id := core.create_session_with_device_limit(
         v_employee1_user_id,
         'macbook-pro-m3-id-001',
-        'token_hash_session_001',
+        encode(sha256('token_hash_session_001'::bytea), 'hex'),
         'Work Laptop',
         'laptop',
         '10.0.0.1'
@@ -114,7 +115,7 @@ BEGIN
     v_session2_id := core.create_session_with_device_limit(
         v_employee1_user_id,
         'iphone-16-pro-id-002',
-        'token_hash_session_002',
+        encode(sha256('token_hash_session_002'::bytea), 'hex'),
         'Work Phone',
         'mobile',
         '10.0.0.2'
@@ -124,7 +125,7 @@ BEGIN
     v_session3_id := core.create_session_with_device_limit(
         v_employee1_user_id,
         'home-pc-desktop-id-003',
-        'token_hash_session_003',
+        encode(sha256('token_hash_session_003'::bytea), 'hex'),
         'Home PC',
         'desktop',
         '10.0.0.3'
@@ -151,7 +152,7 @@ BEGIN
     v_session3_id := core.create_session_with_device_limit(
         v_employee1_user_id,
         'home-pc-desktop-id-003',
-        'token_hash_session_003',
+        encode(sha256('token_hash_session_003'::bytea), 'hex'),
         'Home PC',
         'desktop',
         '10.0.0.3'

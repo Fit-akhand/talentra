@@ -1,4 +1,5 @@
 
+-- Covers: BR-005, REQ-009   (generated from the registers by scripts/lifecycle/tag_tests.py)
 DO $$
 BEGIN
     -- Employment types

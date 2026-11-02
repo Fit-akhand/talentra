@@ -1,4 +1,5 @@
 -- Test: test_security.sql
+-- Covers: SEC-001, SEC-002, SEC-005, SEC-010, SEC-014
 -- Domain: core / audit / recruitment / profile
 -- Purpose: Verify database roles, permissions, Row-Level Security (RLS) isolation, candidate block enforcement, and append-only ledger immutability.
 -- Engine: PostgreSQL 17
@@ -101,7 +102,7 @@ BEGIN
     INSERT INTO audit.audit_event (
         actor_user_account_id, action, entity_schema, entity_name, entity_id
     ) VALUES (
-        v_user2_id, 'security_test_event', 'recruitment', 'job_posting', v_job1_id
+        v_user2_id, 'auth.login', 'recruitment', 'job_posting', v_job1_id
     ) RETURNING id INTO v_audit_id;
 
     -- Attempt UPDATE on audit.audit_event: Must be rejected by trigger

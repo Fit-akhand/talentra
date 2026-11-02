@@ -222,7 +222,7 @@ CREATE TABLE recruitment.job_skill_requirement (
         ON UPDATE RESTRICT
         ON DELETE RESTRICT,
 
-    CONSTRAINT ck_job_skill_requirement_proficiency
+    CONSTRAINT ck_job_skill_requirement_proficiency_level
         CHECK (
             minimum_proficiency_level IS NULL
             OR minimum_proficiency_level IN (
