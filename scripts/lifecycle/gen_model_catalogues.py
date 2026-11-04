@@ -173,7 +173,7 @@ def main():
     governed = [f for f in found if f"{f[0]}.{f[1]}" in trans]
     exempt = {}
     try:
-        cur.execute("SELECT entity_code, column_name, exemption_type, reason FROM master.status_machine_exemption")
+        cur.execute("SELECT entity_code, column_name, exemption, reason FROM master.status_machine_exemption")
         exempt = {(e, c): (k, r) for e, c, k, r in cur.fetchall()}
     except psycopg2.Error:
         cur.connection.rollback()

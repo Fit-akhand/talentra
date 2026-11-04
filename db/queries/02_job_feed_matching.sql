@@ -8,7 +8,7 @@
 
 WITH feed AS (
     SELECT jp.id, jp.title, jp.organization_id, jp.employment_type_id, jp.work_type_id, jp.city_id,
-           jp.salary_min, jp.salary_max, jp.currency_code, jp.published_at
+           jp.salary_min, jp.salary_max, jp.currency_code, jp.show_salary, jp.published_at
       FROM recruitment.job_posting jp
       JOIN master.work_type wt ON wt.id = jp.work_type_id AND wt.code IN ('remote', 'hybrid')
      WHERE jp.job_status = 'published'
@@ -23,9 +23,9 @@ SELECT
     et.name AS employment_type,
     wt.name AS work_type,
     c.name AS city_name,
-    f.salary_min,
-    f.salary_max,
-    f.currency_code,
+    CASE WHEN f.show_salary THEN f.salary_min END AS salary_min,      -- the range stays private until the recruiter ticks "show CTC"
+    CASE WHEN f.show_salary THEN f.salary_max END AS salary_max,
+    CASE WHEN f.show_salary THEN f.currency_code END AS currency_code,
     f.published_at,
     (SELECT COUNT(*) FROM recruitment.job_skill_requirement jsr
       WHERE jsr.job_posting_id = f.id AND jsr.is_required = TRUE) AS required_skills_count

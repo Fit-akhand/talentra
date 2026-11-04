@@ -5,21 +5,21 @@ PostgreSQL schema, test suite, data generator and design documentation for **Tal
 | | |
 |:--|:--|
 | Engine | PostgreSQL 17 (target, used by CI and `docker-compose.yml`). Developed and verified locally on 16.15; see *Status* |
-| Schema | 39 migrations, 10 bounded schemas, 113 base tables and 9 partitions |
-| Tests | 40 suites: 35 SQL suites, a concurrency suite, a golden-dataset KPI suite, a benchmark-harness suite, an identifier-crypto suite and an NFR measurement run |
+| Schema | 42 migrations, 10 bounded schemas, 123 base tables and 9 partitions |
+| Tests | 43 suites: 38 SQL suites, a concurrency suite, a golden-dataset KPI suite, a benchmark-harness suite, an identifier-crypto suite and an NFR measurement run |
 | Documentation | `docs/`, one folder per lifecycle phase; start at [`docs/README.md`](docs/README.md) |
 
 ## Status, stated plainly
 
-- **Verified (2026-10-28, PostgreSQL 17.11 in Docker):** all 39 migrations apply to an empty database; all 40 suites pass; the data validator passes 15 of 15 on a freshly seeded database; generated documents are identical on 16.15 and 17.11. Earlier, on 16.15: backup and restore round-trips with identical row counts and schema objects, and the docket's laptop scale (1M candidates, 5M applications, 11 GB) was loaded, validated, benchmarked, backed up and restored (see [`benchmarks/results/scale_comparison.md`](benchmarks/results/scale_comparison.md)).
-- **Not verified:** the CI workflow has not run on GitHub; the laptop-scale run was on 16.15 and before migrations 029 to 039; the 10M / 100M figures are a projection from two measured sizes, not a measurement.
+- **Verified (2026-11-04, PostgreSQL 17.11 in Docker):** all 42 migrations apply to an empty database; all 43 suites pass; the data validator passes 15 of 15 on a freshly seeded database; generated documents are identical on 16.15 and 17.11. Earlier, on 16.15: backup and restore round-trips with identical row counts and schema objects, and the docket's laptop scale (1M candidates, 5M applications, 11 GB) was loaded, validated, benchmarked, backed up and restored (see [`benchmarks/results/scale_comparison.md`](benchmarks/results/scale_comparison.md)).
+- **Not verified:** the CI workflow has not run on GitHub; the laptop-scale run was on 16.15 and before migrations 029 to 042; the 10M / 100M figures are a projection from two measured sizes, not a measurement.
 - **Known open items**, all listed in [`docs/lifecycle/step-map.md`](docs/lifecycle/step-map.md): no human has approved anything. Targets, retention periods and the column classification were set by the assistant under the owner's delegation and are recorded in [`docs/lifecycle/decision-log.md`](docs/lifecycle/decision-log.md); the tax-identifier encryption has no consuming application yet and the seed data uses a public development key; the CI workflow has not run on GitHub; availability, backup scheduling and notification sending need an operator.
 
 ## Layout
 
 ```
 db/
-  migrations/     001-039, applied in order
+  migrations/     001-042, applied in order
   queries/        12 fixed benchmark queries
   kpi/            16 KPI definitions (SQL), executed by tests and the KPI generator
   seeds/          reference data and the golden dataset

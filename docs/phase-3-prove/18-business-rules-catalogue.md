@@ -9,12 +9,12 @@ Every rule has an ID, an owner (a role, DEC-30), an enforcement point and a name
 
 | Enforcement point | Rules |
 |:--|--:|
-| database | 39 |
+| database | 45 |
 | database (inferred) | 0 |
 | reconciled | 1 |
 | query only | 0 |
 | documentation only | 0 |
-| **total** | **40** |
+| **total** | **46** |
 
 ## Rules
 
@@ -60,6 +60,12 @@ Every rule has an ID, an owner (a role, DEC-30), an enforcement point and a name
 | BR-038 | A profile download is charged at the listed price once per organisation and candidate | Finance | **database** | `download_candidate_profile`; `uq_credit_price` | test_wallet_functions.sql |
 | BR-039 | Impersonation needs a platform administrator and a reason, and is audited at start and end | Security | **database** | `begin_impersonation`; `end_impersonation` | test_audit_coverage.sql, test_administration.sql |
 | BR-040 | An integration exchange is idempotent and dead-letters after the boundary's maximum attempts | Platform | **database** | `uq_integration_event_idempotency`; `fail_integration_event`; `ck_integration_event_attempts` | test_integration_maintenance.sql |
+| BR-041 | A job can show its salary only if it has one (show_salary needs a salary); the salary stays private by default | Finance | **database** | `ck_job_posting_show_salary` | test_job_posting_extras.sql |
+| BR-042 | Only a recruiter of the job's organisation, or an agency recruiter mapped to it as a client, can be assigned to its jobs | Security | **database** | `enforce_recruiter_assignment`; `is_recruiter_for_organization`; `uq_job_recruiter_assignment` | test_job_posting_extras.sql |
+| BR-043 | A candidate's current and expected pay are shown to recruiters only when the candidate chose to reveal them; hidden pay counts as undisclosed in a search | Security | **database** | `candidate_search_attributes_for`; `ck_candidate_job_preference_currency` | test_candidate_search_fields.sql, test_search_and_pipeline.sql |
+| BR-044 | Gender is an optional self-declaration readable only by the candidate and administrators; it is never shown to recruiters and never a search filter | Security | **database** | `ck_candidate_diversity_profile_gender`; `uq_candidate_diversity_profile_profile` | test_candidate_search_fields.sql |
+| BR-045 | A sourced application needs source recruiter_sourced, can be created only by a recruiter of the job's organisation for a candidate they may see, and moves only to applied, shortlisted, rejected or withdrawn | Product | **database** | `ck_candidate_application_sourced`; `enforce_application_recruiter`; `enforce_status_transition` | test_search_and_pipeline.sql |
+| BR-046 | Candidate keyword search returns only active, non-private profiles the searching recruiter may see, never a candidate who blocked the organisation, and only to a user acting for an organisation | Security | **database** | `search_candidates`; `can_view_candidate`; `build_keyword_query` | test_search_and_pipeline.sql |
 
 ## Rules the database does not enforce
 
@@ -73,13 +79,13 @@ Rules with no named test: **none**.
 
 | Object | Count |
 |:--|--:|
-| PRIMARY KEY | 116 |
-| FOREIGN KEY | 368 |
-| UNIQUE | 87 |
-| CHECK | 327 |
+| PRIMARY KEY | 126 |
+| FOREIGN KEY | 403 |
+| UNIQUE | 95 |
+| CHECK | 343 |
 | EXCLUDE | 2 |
-| Triggers (non-internal) | 159 |
-| Indexes | 372 |
+| Triggers (non-internal) | 175 |
+| Indexes | 399 |
 
 ## Decision table: BR-002 device limit at login
 

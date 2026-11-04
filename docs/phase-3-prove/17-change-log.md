@@ -56,6 +56,17 @@ Code and data fixes made alongside:
 | Seed fills the integration tables | The scorecard flagged seven empty tables | The table scorecard |
 | CI: weekly load-test job, tag check, documents generated from the medium seed | The documents depend on the seed size | Local rehearsal of the CI steps |
 
+## Changes made for the recruiter portal (2026-11-04)
+
+| Change | Why | Found by |
+|:--|:--|:--|
+| Migrations 040 to 042: job requirement extras, candidate search fields, keyword search with match percentage, saved searches, the `sourced` stage, recruiter on an application, the requirement page view | The recruiter portal in the class video asked for 17 things the schema could not hold | Checking each screen against the schema (`docs/phase-6-specify/Talentra_Recruiter_Portal_Plan.pptx`) |
+| A status change can carry the recruiter's comment (`change_application_status`) | The history table is append-only and nothing could write the reason at the moment of the move | Writing the pipeline test: the comment column had no write path |
+| The first search ran 1.5 s as the application role | Row-level security re-checked each candidate on every table; and a plan chosen for unknown parameters. Fixed: the function applies visibility once, forces an ordered index scan and plans per call; now 10 to 410 ms at the medium dataset | Timing the function as the application role, not as the table owner |
+| `gen_model_catalogues.py` read a column that does not exist, so document 08 reported five undecided status columns that were in fact recorded exemptions | The query failed silently | Regenerating the documents after the migrations |
+| Phase 4 tables (identity verification, share events, review figures, legacy-sync tables) were cited by no workflow | They were added after the workflows were written | The workflow-coverage generator |
+| Q02 shows the salary only when `show_salary` is set; Q03 orders the new stage | Follows migrations 040 and 042 | Reading the queries after the change |
+
 ## Deferred, with the reason
 
 | Item | Reason it was not done |

@@ -137,7 +137,7 @@ All nine share one mechanism (`messaging.integration_event`, WF-15): an exchange
 
 The docket requires the sync direction for each field and the rule for conflicts. The legacy systems' schemas were not available, so **the legacy field names are assumptions** (DEC-32); the Talentra columns, directions, rules and owners are real and are held in `messaging.legacy_field_mapping`. `messaging.resolve_sync_conflict` applies a rule to one field and `messaging.sync_conflict` logs the result with hashes, not values.
 
-**31 fields are synchronised** (bidirectional 3, inbound 28); **29 columns of the same tables are recorded as not synchronised**, each with the reason. Rules in use: cutover_dependent (16), legacy_wins (7), latest_update_wins (7), manual_review (1).
+**33 fields are synchronised** (bidirectional 3, inbound 30); **32 columns of the same tables are recorded as not synchronised**, each with the reason. Rules in use: cutover_dependent (17), latest_update_wins (8), legacy_wins (7), manual_review (1).
 
 | Rule | Meaning |
 |:--|:--|
@@ -152,6 +152,7 @@ The docket requires the sync direction for each field and the rule for conflicts
 | `core.user_account.email` | candidate.email | inbound | manual_review | Security | The email identifies the person; two different emails for one legacy record are a possible different person and need a human |
 | `core.user_account.phone_e164` | candidate.mobile | inbound | latest_update_wins | Data | Contact data: the more recent change is the better one; legacy format is normalised to E.164 on the way in |
 | `profile.candidate_profile.headline` | candidate.title | inbound | cutover_dependent | Product | Profile text: legacy before cut-over, Talentra after |
+| `profile.candidate_profile.last_active_at` | candidate.last_login | inbound | latest_update_wins | Data | The more recent sign-in, from either system, is the last activity |
 | `profile.candidate_profile.professional_summary` | candidate.about | inbound | cutover_dependent | Product | Profile text: legacy before cut-over, Talentra after |
 | `profile.candidate_profile.profile_status` | candidate.status | bidirectional | latest_update_wins | Product | Either side can deactivate or reactivate; the later change wins |
 | `profile.candidate_profile.summary_language_code` | candidate.about_lang | inbound | cutover_dependent | Data | Follows the text it describes |
@@ -171,6 +172,7 @@ The docket requires the sync direction for each field and the rule for conflicts
 | `recruitment.candidate_application.candidate_profile_id` | application.candidate_ref | inbound | legacy_wins | Data | Identity of the application; resolved through messaging.external_reference |
 | `recruitment.candidate_application.cover_letter` | application.cover_note | inbound | legacy_wins | Data | What the candidate wrote at the time does not change |
 | `recruitment.candidate_application.job_posting_id` | application.job_ref | inbound | legacy_wins | Data | Identity of the application; resolved through messaging.external_reference |
+| `recruitment.candidate_application.assigned_recruiter_user_account_id` | - | not_synced | - | Data | Recruiters are Talentra user accounts; legacy recruiter names are not matched to accounts |
 | `recruitment.candidate_application.candidate_document_id` | - | not_synced | - | Data | Documents are migrated separately into object storage and linked afterwards |
 | `recruitment.candidate_application.created_at` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.candidate_application.created_by_user_account_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
@@ -180,6 +182,7 @@ The docket requires the sync direction for each field and the rule for conflicts
 | `recruitment.candidate_application.updated_by_user_account_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.application_deadline` | job.closes_on | inbound | latest_update_wins | Product | A date either side may extend |
 | `recruitment.job_posting.currency_code` | job.salary_currency | inbound | cutover_dependent | Finance | As salary_min |
+| `recruitment.job_posting.department_id` | job.department | inbound | cutover_dependent | Product | Legacy owns the department until cut-over; Talentra after |
 | `recruitment.job_posting.description` | job.description | inbound | cutover_dependent | Product | Job text: legacy before cut-over, Talentra after |
 | `recruitment.job_posting.description_language_code` | job.description_lang | inbound | cutover_dependent | Data | Follows the text it describes |
 | `recruitment.job_posting.job_status` | job.state | bidirectional | latest_update_wins | Product | Either side can close a job; the later change wins and the state machine still applies |
@@ -202,9 +205,11 @@ The docket requires the sync direction for each field and the rule for conflicts
 | `recruitment.job_posting.deleted_at` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.deleted_by_user_account_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.employment_type_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
+| `recruitment.job_posting.has_variable_pay` | - | not_synced | - | Finance | No equivalent in the legacy systems; set by the recruiter in Talentra |
 | `recruitment.job_posting.id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.industry_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.job_role_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
+| `recruitment.job_posting.show_salary` | - | not_synced | - | Finance | A Talentra privacy choice: the legacy systems always showed the salary or never did |
 | `recruitment.job_posting.updated_at` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.updated_by_user_account_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |
 | `recruitment.job_posting.work_type_id` | - | not_synced | - | Data | Maintained by Talentra: key, audit, lifecycle or derived column |

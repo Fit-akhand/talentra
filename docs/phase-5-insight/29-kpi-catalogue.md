@@ -34,8 +34,8 @@ Example output from the run that generated this file. The dataset is the `dev` s
 
 | ID | First row |
 |:--|:--|
-| KPI-001 | applications_per_published_job=55.10 |
-| KPI-002 | application_status=applied, applications=25341, pct_of_all=50.68 |
+| KPI-001 | applications_per_published_job=59.95 |
+| KPI-002 | application_status=applied, applications=25341, pct_of_all=47.83 |
 | KPI-003 | avg_hours_applied_to_joined=780.94, joined_applications=1644 |
 | KPI-004 | offer_to_join_pct=31.11 |
 | KPI-005 | avg_profile_completeness_pct=95.52 |

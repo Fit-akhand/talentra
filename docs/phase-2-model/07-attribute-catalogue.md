@@ -5,17 +5,17 @@
 
 Everything here is read from the database, so this dictionary cannot drift from the schema: structure from the catalog, class and protection from `audit.column_classification` (Rule Group 6), definitions from `COMMENT ON` statements. A column with no comment has no written business definition yet; that is a documentation gap, shown below, not hidden.
 
-**Totals:** 1304 columns across 113 base tables.
+**Totals:** 1395 columns across 123 base tables.
 
 | Measure | Count |
 |:--|--:|
-| Columns with a written definition (`COMMENT ON`) | 1304 of 1304 |
-| Nullable columns | 449 |
-| Nullable columns with a written justification (RG5) | 449 of 449 |
-| Classified `internal` | 1085 |
-| Classified `personal` | 97 |
-| Classified `public` | 114 |
-| Classified `sensitive` | 8 |
+| Columns with a written definition (`COMMENT ON`) | 1395 of 1395 |
+| Nullable columns | 479 |
+| Nullable columns with a written justification (RG5) | 479 of 479 |
+| Classified `internal` | 1122 |
+| Classified `personal` | 132 |
+| Classified `public` | 130 |
+| Classified `sensitive` | 11 |
 
 Rule Group 5 asks for a written justification of every nullable column. Every column has a definition and every nullable column says what NULL means (migration 033; `tests/test_column_definitions.sql` fails otherwise).
 
@@ -859,6 +859,21 @@ Country catalogue using ISO alpha-2 and alpha-3 codes
 | 9 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 10 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 
+## `master.department`
+
+Company departments a job or a work history belongs to (Engineering, Human Resources...). Reference data, read-only to the application.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | public | grants_only | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `name` | character varying(100) | no | - | - | public | grants_only | Department name in English; the display name in other languages is a translation key in messaging.ui_translation. |
+| 3 | `normalized_name` | character varying(100) | no | - | UQ | public | grants_only | Lower-case, trimmed form of name used for matching and uniqueness. |
+| 4 | `is_active` | boolean | no | true | - | public | grants_only | True while the department can be chosen. Default TRUE. |
+| 5 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | public | grants_only | When the row was created (UTC). Set by trigger and never changed. |
+| 6 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | public | grants_only | When the row was last changed (UTC). Set by trigger. |
+| 7 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 8 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Account that last changed the row, taken from the session. NULL when the system changed it. |
+
 ## `master.employment_type`
 
 Employment arrangements such as full-time, contract, and internship
@@ -904,6 +919,21 @@ Industry classification catalogue
 | 6 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | public | grants_only | When the row was last changed (UTC). Set by trigger. |
 | 7 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 8 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
+
+## `master.job_perk`
+
+Benefits an employer can list on a job (provident fund, cab service, relocation benefits...). Reference data, read-only to the application.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | public | grants_only | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `code` | character varying(40) | no | - | UQ | public | grants_only | Stable machine-readable code (lower case), unique within the table. |
+| 3 | `name` | character varying(100) | no | - | - | public | grants_only | Perk name in English, as shown on the job. |
+| 4 | `is_active` | boolean | no | true | - | public | grants_only | True while the perk can be chosen. Default TRUE. |
+| 5 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | public | grants_only | When the row was created (UTC). Set by trigger and never changed. |
+| 6 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | public | grants_only | When the row was last changed (UTC). Set by trigger. |
+| 7 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 8 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | public | grants_only | Account that last changed the row, taken from the session. NULL when the system changed it. |
 
 ## `master.job_role`
 
@@ -1412,6 +1442,21 @@ Candidate performance and verified scores on standardized assessments
 | 11 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 12 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 
+## `profile.candidate_diversity_profile`
+
+Optional self-declared gender, for equal-opportunity reporting only. Readable by the candidate and platform administrators; never by recruiters; never a search filter (DEC-35).
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | personal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `candidate_profile_id` | bigint | no | - | FK to profile.candidate_profile, UQ | personal | rls | Reference to profile.candidate_profile (who declared it). Required; one row per candidate; deleted with the profile. |
+| 3 | `gender` | character varying(20) | no | - | - | sensitive | rls | Self-declared: female, male, non_binary or prefer_not_to_say. Sensitive; readable only by the candidate and platform administrators (DEC-35) |
+| 4 | `declared_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the candidate made the declaration (UTC). |
+| 5 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 6 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the row was last changed (UTC). Set by trigger. |
+| 7 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | personal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 8 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | personal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
+
 ## `profile.candidate_document`
 
 Candidate document metadata; binary content is stored in object storage
@@ -1460,6 +1505,25 @@ Candidate education history; institution and grade details are personal data
 | 12 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
 | 13 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 14 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
+| 15 | `study_mode` | character varying(20) | yes | - | - | personal | rls | How the course was studied: full_time, part_time or distance. NULL when not stated. |
+
+## `profile.candidate_job_preference`
+
+What a candidate wants and can offer: notice period and current and expected annual pay. Pay is the candidate's to reveal (DEC-36); recruiters read it through profile.candidate_search_attributes.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | personal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `candidate_profile_id` | bigint | no | - | FK to profile.candidate_profile, UQ | personal | rls | Reference to profile.candidate_profile (whose preferences). Required; one row per candidate; deleted with the profile. |
+| 3 | `notice_period_days` | integer | yes | - | - | personal | rls | Days before the candidate could start a new job, 0 to 365 (0 is immediate). NULL when not stated. |
+| 4 | `current_annual_ctc` | numeric(14,2) | yes | - | - | sensitive | rls | Current annual pay (cost to company) in ctc_currency_code. NULL when the candidate gave none. Sensitive; recruiters see it only if is_ctc_vi |
+| 5 | `expected_annual_ctc` | numeric(14,2) | yes | - | - | sensitive | rls | Expected annual pay in ctc_currency_code. NULL when the candidate gave none. Sensitive; recruiters see it only if is_ctc_visible_to_recruite |
+| 6 | `ctc_currency_code` | character(3) | yes | - | - | personal | rls | ISO 4217 currency of both pay figures. NULL exactly when both figures are NULL. |
+| 7 | `is_ctc_visible_to_recruiters` | boolean | no | false | - | personal | rls | True when the candidate lets recruiters see the pay figures. Default FALSE: pay is the candidate's to reveal (DEC-36). |
+| 8 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 9 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the row was last changed (UTC). Set by trigger. |
+| 10 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | personal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 11 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | personal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
 
 ## `profile.candidate_language`
 
@@ -1514,6 +1578,7 @@ Candidate-specific professional profile linked to a shared user account
 | 12 | `deleted_at` | timestamp with time zone | yes | - | - | internal | rls | Nullable: NULL means the row is live. Set when the row is soft-deleted; default queries use the active_ view. |
 | 13 | `deleted_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: NULL while the row is live, and when the deletion was done by a system job (retention). |
 | 14 | `summary_language_code` | character varying(10) | yes | - | FK to master.language | internal | rls | Nullable: language the professional summary was written in, when known. |
+| 15 | `last_active_at` | timestamp with time zone | yes | - | - | personal | rls | When the candidate last signed in (UTC), set by trigger on core.user_session. NULL until the first sign-in after this column existed. |
 
 ## `profile.candidate_profile_completion`
 
@@ -1558,6 +1623,17 @@ Candidate professional and gig projects, detailing their role, duration, and out
 | 13 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
 | 14 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 15 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
+
+## `profile.candidate_search_document`
+
+One full-text document per candidate, built from the headline, summary, skills, work history and education, and kept current by triggers. Derived data: rebuilt from the profile, deleted with it.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | personal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `candidate_profile_id` | bigint | no | - | FK to profile.candidate_profile, UQ | personal | rls | Reference to profile.candidate_profile (whose document). One document per candidate (unique); deleted with the profile. |
+| 3 | `document` | tsvector | no | - | - | personal | rls | Weighted full-text vector of headline (A), skills and job titles (B), summary and education (C) and work descriptions (D). Personal data der |
+| 4 | `refreshed_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the document was last rebuilt (UTC). |
 
 ## `profile.candidate_search_history`
 
@@ -1613,6 +1689,7 @@ Candidate employment history; employer and career details are personal data
 | 12 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
 | 13 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 14 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
+| 15 | `department_id` | bigint | yes | - | FK to master.department | personal | rls | Reference to master.department (where the candidate worked in that company). NULL when not stated. |
 
 ## `profile.course`
 
@@ -1680,6 +1757,25 @@ Employer and recruiter candidate shortlists and bookmarks
 | 7 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
 | 8 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 9 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
+
+## `profile.recruiter_search`
+
+A recruiter's searches: the most recent unnamed ones ("Recently searched") and the named ones they saved, optionally with an alert.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | personal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `organization_id` | bigint | no | - | FK to recruitment.organization | personal | rls | Reference to recruitment.organization (the company the recruiter was acting for). Required. |
+| 3 | `user_account_id` | bigint | no | - | FK to core.user_account | personal | rls | Reference to core.user_account (the recruiter who searched). Required. |
+| 4 | `name` | character varying(100) | yes | - | - | personal | rls | Name the recruiter gave a saved search. NULL for an unnamed recent search. |
+| 5 | `criteria_json` | jsonb | no | - | - | personal | rls | The filters used, as a JSON object (keywords, experience, cities, skill ids...). Must not carry candidate data. |
+| 6 | `result_count` | integer | no | - | - | personal | rls | How many candidates the search found when it last ran; zero or more. |
+| 7 | `last_run_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the search last ran (UTC). |
+| 8 | `is_alert_enabled` | boolean | no | false | - | personal | rls | True when the recruiter wants an alert about new matches; only a named (saved) search can have one. Default FALSE. |
+| 9 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 10 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | personal | rls | When the row was last changed (UTC). Set by trigger. |
+| 11 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | personal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 12 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | personal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
 
 ## `profile.resume_template`
 
@@ -1749,6 +1845,7 @@ A candidate application to a job posting; one application per candidate and job.
 | 11 | `created_by_user_account_id` | bigint | no | - | FK to core.user_account | internal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
 | 12 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
 | 13 | `updated_by_user_account_id` | bigint | no | - | FK to core.user_account | internal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
+| 14 | `assigned_recruiter_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Reference to core.user_account (the recruiter handling this candidate on this job). Must be a recruiter of the job's organisation or mapped  |
 
 ## `recruitment.candidate_application_partitioned`
 
@@ -1843,6 +1940,53 @@ Organization-owned job advertisements and their hiring requirements
 | 28 | `deleted_at` | timestamp with time zone | yes | - | - | internal | rls | Nullable: NULL means the row is live. Set when the row is soft-deleted; default queries use the active_ view. |
 | 29 | `deleted_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Nullable: NULL while the row is live, and when the deletion was done by a system job (retention). |
 | 30 | `description_language_code` | character varying(10) | yes | - | FK to master.language | internal | rls | Nullable: language the description was written in, when known. The text is stored once, as entered. |
+| 31 | `department_id` | bigint | yes | - | FK to master.department | internal | rls | Reference to master.department (the hiring department). NULL when the employer did not say. |
+| 32 | `show_salary` | boolean | no | false | - | internal | rls | True when candidates may see the salary range on the job. Default FALSE: the range stays private until the recruiter ticks "show CTC". A CHE |
+| 33 | `has_variable_pay` | boolean | no | false | - | internal | rls | True when part of the pay depends on incentives, so the range is not all fixed. Default FALSE. |
+
+## `recruitment.job_posting_location`
+
+The cities a job is open in, besides the primary city on the job itself.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | internal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `job_posting_id` | bigint | no | - | FK to recruitment.job_posting | internal | rls | Reference to recruitment.job_posting (the job). Required; the row is deleted with the job. |
+| 3 | `city_id` | bigint | no | - | FK to master.city | internal | rls | Reference to master.city (a city the job is open in). Required. |
+| 4 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 5 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
+| 6 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 7 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
+
+## `recruitment.job_posting_perk`
+
+The perks an employer lists on a job (provident fund, cab service, relocation benefits...).
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | internal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `job_posting_id` | bigint | no | - | FK to recruitment.job_posting | internal | rls | Reference to recruitment.job_posting (the job). Required; the row is deleted with the job. |
+| 3 | `job_perk_id` | bigint | no | - | FK to master.job_perk | internal | rls | Reference to master.job_perk (the benefit offered). Required. |
+| 4 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 5 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
+| 6 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 7 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
+
+## `recruitment.job_qualification_requirement`
+
+Education a job asks for, as a level from master.qualification with an optional field (B.Tech in Computer Science is Undergraduate + "Computer Science").
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | internal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `job_posting_id` | bigint | no | - | FK to recruitment.job_posting | internal | rls | Reference to recruitment.job_posting (the job). Required; the row is deleted with the job. |
+| 3 | `qualification_id` | bigint | no | - | FK to master.qualification | internal | rls | Reference to master.qualification (the education level asked for). Required. |
+| 4 | `field_of_study` | character varying(100) | yes | - | - | internal | rls | Subject asked for, for example Computer Science. NULL when any subject will do. |
+| 5 | `is_mandatory` | boolean | no | true | - | internal | rls | True when a candidate without it does not qualify; false when it is only preferred. Default TRUE. |
+| 6 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 7 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
+| 8 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 9 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
 
 ## `recruitment.job_questionnaire`
 
@@ -1877,6 +2021,23 @@ Individual questions within an application screening questionnaire
 | 9 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | grants_only | When the row was last changed (UTC). Set by trigger. |
 | 10 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | grants_only | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
 | 11 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | grants_only | Nullable: filled from app.current_user_id by the audit trigger. NULL when a system job or migration made the change, which has no user. |
+
+## `recruitment.job_recruiter_assignment`
+
+Which recruiters work on a job ("Assign recruiters" on the New Requirement screen). A recruiter must belong to the job's organisation or be mapped to it as a client.
+
+| # | Column | Type | Null | Default | Key | Class | Protection | Definition |
+|--:|:--|:--|:--|:--|:--|:--|:--|:--|
+| 1 | `id` | bigint | no | - | PK | internal | rls | Surrogate primary key (64-bit identity). Never reused, never shown to users. |
+| 2 | `job_posting_id` | bigint | no | - | FK to recruitment.job_posting | internal | rls | Reference to recruitment.job_posting (the job). Required; the row is deleted with the job. |
+| 3 | `recruiter_user_account_id` | bigint | no | - | FK to core.user_account | internal | rls | Reference to core.user_account (the recruiter working on the job). Must be a recruiter of the job's organisation or mapped to it as a client |
+| 4 | `assigned_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Reference to core.user_account (who made the assignment). NULL when the system did. |
+| 5 | `assigned_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the recruiter was assigned (UTC). |
+| 6 | `is_active` | boolean | no | true | - | internal | rls | True while the recruiter works on the job; false keeps the history after they are taken off it. Default TRUE. |
+| 7 | `created_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was created (UTC). Set by trigger and never changed. |
+| 8 | `updated_at` | timestamp with time zone | no | CURRENT_TIMESTAMP | - | internal | rls | When the row was last changed (UTC). Set by trigger. |
+| 9 | `created_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that created the row, taken from the session. NULL when the system created it (seed, migration, scheduled job). |
+| 10 | `updated_by_user_account_id` | bigint | yes | - | FK to core.user_account | internal | rls | Account that last changed the row, taken from the session. NULL when the system changed it. |
 
 ## `recruitment.job_skill_requirement`
 

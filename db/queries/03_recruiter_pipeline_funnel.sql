@@ -16,6 +16,7 @@ WHERE ca.job_posting_id = 1
 GROUP BY ca.application_status
 ORDER BY
     CASE ca.application_status
+        WHEN 'sourced' THEN 0
         WHEN 'applied' THEN 1
         WHEN 'shortlisted' THEN 2
         WHEN 'interviewed' THEN 3

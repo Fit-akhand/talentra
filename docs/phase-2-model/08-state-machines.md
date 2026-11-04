@@ -5,7 +5,7 @@
 
 A status column is **governed** when `master.status_transition` lists its legal moves and a trigger rejects every other update (migration 022). Everything not listed is illegal, so the illegal transitions are the complement and need no separate list. A status with no outgoing move is **final**.
 
-**25 governed state machines, 0 recorded exemptions, 5 status columns undecided** (of 30 status-like columns).
+**25 governed state machines, 5 recorded exemptions, 0 status columns undecided** (of 30 status-like columns).
 
 ## Governed state machines
 
@@ -190,10 +190,11 @@ States: `enrolled`, `in_progress`, `completed`, `dropped`. Initial: none. Final:
 
 ### `recruitment.candidate_application.application_status`
 
-States: `applied`, `shortlisted`, `interviewed`, `offered`, `joined`, `rejected`, `withdrawn`. Initial: `applied`. Final: `joined`, `rejected`, `withdrawn`. Legal moves: 12. Illegal moves (rejected): 30.
+States: `sourced`, `applied`, `shortlisted`, `interviewed`, `offered`, `joined`, `rejected`, `withdrawn`. Initial: `sourced`. Final: `joined`, `rejected`, `withdrawn`. Legal moves: 16. Illegal moves (rejected): 40.
 
 | From | Allowed next states |
 |:--|:--|
+| `sourced` | `applied`, `rejected`, `shortlisted`, `withdrawn` |
 | `applied` | `rejected`, `shortlisted`, `withdrawn` |
 | `shortlisted` | `interviewed`, `rejected`, `withdrawn` |
 | `interviewed` | `offered`, `rejected`, `withdrawn` |
@@ -300,13 +301,13 @@ A status that no trigger governs must be a recorded decision, not an oversight: 
 
 | Table | Column | Kind | Reason |
 |:--|:--|:--|:--|
-| `audit.maintenance_run` | `run_status` | **undecided** | - |
-| `messaging.notification_delivery` | `delivery_status` | **undecided** | - |
-| `recruitment.application_status_history` | `new_status` | **undecided** | - |
-| `recruitment.application_status_history` | `previous_status` | **undecided** | - |
-| `sourcing.outreach_recipient` | `delivery_status` | **undecided** | - |
+| `audit.maintenance_run` | `run_status` | append_only_history | One row is written when a job finishes; the status is its outcome, not a state that changes. |
+| `messaging.notification_delivery` | `delivery_status` | external_driver | Written from provider callbacks that arrive out of order (a "delivered" can precede "sent"). Rejecting a legitimate late callback would lose the truth; ordering is resolved by the provider timestamp in the application. |
+| `recruitment.application_status_history` | `new_status` | append_only_history | A history row records a move that the application table has already validated; the history itself is append-only. |
+| `recruitment.application_status_history` | `previous_status` | append_only_history | As new_status: it records the state left, and the history cannot be updated. |
+| `sourcing.outreach_recipient` | `delivery_status` | external_driver | Same as notification delivery: set from provider callbacks and recipient replies, which are not ordered. |
 
 ## Gaps
 
-1. 5 status columns are undecided.
+1. Every status column is governed (25) or a recorded exemption (5); none is undecided.
 2. Enumerations are CHECK lists, not lookup tables. Docket Rule Group 3 asks for lookup tables with per-language display names. The deviation is recorded in `11-rule-compliance.md`.

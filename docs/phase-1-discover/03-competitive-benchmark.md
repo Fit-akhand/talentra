@@ -39,8 +39,8 @@ Talentra's column is checked against the current schema (108 base tables, migrat
 
 | # | Capability | Talentra | Naukri | foundit | LinkedIn |
 |:--|:--|:--|:--|:--|:--|
-| 1 | **Candidate search filters** | Impl.: skills, minimum experience, location, visibility (`db/queries/01`). No keyword, salary or education filter | 20+ filters (title, location, skills, experience, salary), five search modes, keyword over resume sections, search within results, education type [N1 N3 N4] | Filters by company, city, industry, job role; IT / non-IT split; semantic search [F1] | 40+ filters, Boolean keyword search, AI-generated filters from a description, similar-profile search [L1 L2] |
-| 2 | **Saved searches and alerts** | **Not present** for recruiters (candidates have `job_alert_preference`) | Saved searches send email alerts on new matches [N1] | Not stated | Saved filters; alerts capped at 10 per seat (Lite) or 50 (other plans) [L1 L2] |
+| 1 | **Candidate search filters** | Impl. (2026-11-04): keywords and boolean mode, exclusions, experience, location, skills, education and study mode, department, notice period, current pay (when revealed), recent activity (`profile.search_candidates`) | 20+ filters (title, location, skills, experience, salary), five search modes, keyword over resume sections, search within results, education type [N1 N3 N4] | Filters by company, city, industry, job role; IT / non-IT split; semantic search [F1] | 40+ filters, Boolean keyword search, AI-generated filters from a description, similar-profile search [L1 L2] |
+| 2 | **Saved searches and alerts** | Impl. (2026-11-04): `profile.recruiter_search` (latest 20 and named saved searches, optional alert flag); the alert dispatch is the application's | Saved searches send email alerts on new matches [N1] | Not stated | Saved filters; alerts capped at 10 per seat (Lite) or 50 (other plans) [L1 L2] |
 | 3 | **Folders / shared projects** | Partial: `profile.recruiter_bookmark` (a bookmark with a note) | Save resumes into folders [N1] | Save profiles into folders [F1] | Projects holding results, applications and notes; shared with teammates; @mentions [L1] |
 | 4 | **Pipeline stages and history** | Impl.: constrained stage set, every change written to a history table by trigger, governed transitions | Not stated | Not stated | Custom pipeline stages with conversion rates [L1] |
 | 5 | **Bulk outreach** | Impl.: `sourcing.outreach_batch` / `outreach_recipient`, block-aware, credits deducted | Custom emails and job details from the results page [N1] | Email and SMS to shortlisted candidates [F1] | Bulk InMail with templates, scheduled follow-ups [L1] |
@@ -48,9 +48,9 @@ Talentra's column is checked against the current schema (108 base tables, migrat
 | 7 | **Seats and licences** | Impl.: licence seats, per-user device limit enforced under a row lock | Per-recruiter usage and login reports imply named users [N2] | Not stated | Seats; 20 free collaborator licences per seat; purchaser admin owns the data (Lite) or the company does [L1 L2] |
 | 8 | **Usage reporting for administrators** | Partial: audit trail, download history, `audit.ops_*` views; no per-recruiter usage report | Searches, CV views, emails, downloads per recruiter; login activity [N2 N3] | Not stated | Usage reports, saved and auto-sent, exportable [L1] |
 | 9 | **Hiring analytics** | Impl.: star schema, 16 reconciled KPIs | Not stated | Not stated | Pipeline analytics, funnel insights with industry benchmarks [L1 L2] |
-| 10 | **Recruiter-side candidate recommendations** | **Not present** (`db/queries/02` is a candidate's job feed from profile attributes; no learning, no ranking signal) | AI CV recommendations after a job is posted [N2] | Recommendation engine [F1] | Recommended Matches [L1] |
+| 10 | **Recruiter-side candidate recommendations** | Partial (2026-11-04): a documented match percentage ranks search results; no learning model and no proactive recommendations | AI CV recommendations after a job is posted [N2] | Recommendation engine [F1] | Recommended Matches [L1] |
 | 11 | **Candidate controls over discoverability** | Impl.: visibility (public / recruiters / private), blocks of users and organisations, consent records, enforced by row-level security | Not stated | Private resumes are not searchable [F2] | "Open to work" filter [L1] |
-| 12 | **Candidate activity / freshness signal** | **Not present** (only device `last_seen_at`) | Freshness and last-active as search criteria and sort keys [N1 N2] | Not stated | Not stated on the pages read |
+| 12 | **Candidate activity / freshness signal** | Impl. (2026-11-04): `profile.candidate_profile.last_active_at`, set at sign-in, used as filter and ranking | Freshness and last-active as search criteria and sort keys [N1 N2] | Not stated | Not stated on the pages read |
 | 13 | **Interview scheduling** | **Not present** | Not stated | Not stated | Zoom, Teams, Google Meet scheduling [L1] |
 | 14 | **ATS / CRM integration** | Partial: integration outbox with retries and dead letter for the nine docket boundaries; no ATS boundary | Not stated | Not stated | ATS identification of existing candidates, system connect, CRM connection [L1] |
 | 15 | **Fairness tooling** | **Not present** | Not stated | Not stated | Gender-ratio alerts and filters [L1] |
@@ -67,11 +67,11 @@ Talentra's column is checked against the current schema (108 base tables, migrat
 
 | Gap | Competitors that publish it | Database-level cost | Decision (Delegated, DEC-26) |
 |:--|:--|:--|:--|
-| Recruiter saved searches and alerts | Naukri, LinkedIn | One table plus a dispatch job | Candidate requirement; **not built**. Not in the docket |
+| Recruiter saved searches and alerts | Naukri, LinkedIn | One table plus a dispatch job | **Built** 2026-11-04 (table and flag; dispatch is the application's); DEC-37 supersedes DEC-26 for this item |
 | Folders / shared projects | all three | Two tables with row-level security | Candidate requirement; **not built** |
-| Candidate last-active signal | Naukri, LinkedIn | One column maintained on login | Candidate requirement; **not built** |
+| Candidate last-active signal | Naukri, LinkedIn | One column maintained on login | **Built** 2026-11-04 (migration 041) |
 | Recruiter-side recommendations | all three | Model and ranking, mostly outside SQL | Out of scope for a database design; record only |
-| Keyword and Boolean search | Naukri, LinkedIn | Full-text index or search service | Candidate requirement; **not built** |
+| Keyword and Boolean search | Naukri, LinkedIn | Full-text index or search service | **Built** 2026-11-04 (PostgreSQL full-text search; boolean mode is OR, phrases and minus, not a full boolean language) |
 | Interview scheduling, ATS/CRM, fairness tooling | LinkedIn | Application-level | Out of scope; record only |
 
 **Why none were built.** The docket defines the scope (B1 to B82), and parity with three commercial products is not in it. Adding tables to match marketing pages would widen the schema past the evidenced product, which the first benchmark already flagged as a risk (tables with no workflow). They are recorded here, in the requirements register as candidates, and left for the owner to accept.

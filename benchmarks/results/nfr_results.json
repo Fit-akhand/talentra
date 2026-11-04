@@ -1,24 +1,24 @@
 {
-  "measured_at": "2026-10-27T21:51:32Z",
+  "measured_at": "2026-11-04T07:33:48Z",
   "engine": "PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2)",
   "max_connections": 100,
   "dataset": "dev seed plus the rows each check adds",
   "NFR-006": {
     "n": 265,
-    "p50_ms": 0.164,
-    "p95_ms": 0.189,
-    "p99_ms": 0.202,
-    "max_ms": 0.218,
+    "p50_ms": 0.17,
+    "p95_ms": 0.193,
+    "p99_ms": 0.279,
+    "max_ms": 0.608,
     "target_p95_ms": 5.0,
     "met": true
   },
   "NFR-003": {
-    "n": 248,
-    "p50_ms": 0.582,
-    "p95_ms": 0.668,
-    "p99_ms": 1.185,
-    "max_ms": 1.758,
-    "history_rows_written_by_trigger": 423,
+    "n": 247,
+    "p50_ms": 0.617,
+    "p95_ms": 0.669,
+    "p99_ms": 0.718,
+    "max_ms": 1.762,
+    "history_rows_written_by_trigger": 424,
     "target_p95_ms": 50.0,
     "met": true
   },
@@ -27,29 +27,29 @@
     "different_users": {
       "attempts": 500,
       "succeeded": 500,
-      "wall_seconds": 1.05,
+      "wall_seconds": 1.12,
       "latency": {
         "n": 500,
-        "p50_ms": 35.92,
-        "p95_ms": 97.83,
-        "p99_ms": 122.163,
-        "max_ms": 147.629
+        "p50_ms": 26.024,
+        "p95_ms": 101.293,
+        "p99_ms": 131.31,
+        "max_ms": 150.905
       }
     },
     "one_user_two_devices": {
       "attempts": 500,
       "succeeded": 2,
       "open_sessions_in_database": 2,
-      "wall_seconds": 1.1,
+      "wall_seconds": 1.22,
       "rejection_codes": [
         "None"
       ],
       "latency": {
         "n": 500,
-        "p50_ms": 137.949,
-        "p95_ms": 158.474,
-        "p99_ms": 174.397,
-        "max_ms": 186.782
+        "p50_ms": 157.938,
+        "p95_ms": 177.545,
+        "p99_ms": 182.296,
+        "max_ms": 195.553
       }
     },
     "deadlocks": 0,
@@ -57,13 +57,13 @@
   },
   "NFR-009": {
     "n": 30,
-    "p50_ms": 7.539,
-    "p95_ms": 7.934,
-    "p99_ms": 7.974,
-    "max_ms": 7.987,
+    "p50_ms": 7.213,
+    "p95_ms": 7.747,
+    "p99_ms": 7.804,
+    "max_ms": 7.821,
     "applications_on_the_job": 50009,
     "stages_returned": 6,
-    "bulk_load_seconds": 1.55,
+    "bulk_load_seconds": 1.46,
     "target_p95_ms": 25.0,
     "met": true
   }

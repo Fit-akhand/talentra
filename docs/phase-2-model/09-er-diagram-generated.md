@@ -22,15 +22,17 @@ erDiagram
     user_session }o--|| user_account : "user_account_id"
 ```
 
-## `master` (13 tables)
+## `master` (15 tables)
 
 ```mermaid
 erDiagram
     city }o--|| state : "state_id"
     job_role }o--|| industry : "industry_id"
     state }o--|| country : "country_id"
+    department
     employment_type
     enumeration_value
+    job_perk
     language
     qualification
     skill
@@ -39,20 +41,23 @@ erDiagram
     work_type
 ```
 
-## `profile` (18 tables)
+## `profile` (22 tables)
 
 ```mermaid
 erDiagram
     candidate_activity_log }o--|| candidate_profile : "candidate_profile_id"
     candidate_assessment_score }o--|| candidate_assessment : "candidate_assessment_id"
     candidate_assessment_score }o--|| candidate_profile : "candidate_profile_id"
+    candidate_diversity_profile }o--|| candidate_profile : "candidate_profile_id"
     candidate_document }o--|| candidate_profile : "candidate_profile_id"
     candidate_document }o--|| resume_template : "resume_template_id"
     candidate_education }o--|| candidate_profile : "candidate_profile_id"
+    candidate_job_preference }o--|| candidate_profile : "candidate_profile_id"
     candidate_language }o--|| candidate_profile : "candidate_profile_id"
     candidate_location }o--|| candidate_profile : "candidate_profile_id"
     candidate_profile_completion }o--|| candidate_profile : "candidate_profile_id"
     candidate_project }o--|| candidate_profile : "candidate_profile_id"
+    candidate_search_document }o--|| candidate_profile : "candidate_profile_id"
     candidate_search_history }o--|| candidate_profile : "candidate_profile_id"
     candidate_skill }o--|| candidate_profile : "candidate_profile_id"
     candidate_work_experience }o--|| candidate_profile : "candidate_profile_id"
@@ -60,9 +65,10 @@ erDiagram
     course_enrolment }o--|| course : "course_id"
     profile_view_history }o--|| candidate_profile : "candidate_profile_id"
     recruiter_bookmark }o--|| candidate_profile : "candidate_profile_id"
+    recruiter_search
 ```
 
-## `recruitment` (16 tables)
+## `recruitment` (20 tables)
 
 ```mermaid
 erDiagram
@@ -73,8 +79,12 @@ erDiagram
     company_review_summary }o--|| organization : "organization_id"
     job_position }o--|| job_posting : "job_posting_id"
     job_posting }o--|| organization : "organization_id"
+    job_posting_location }o--|| job_posting : "job_posting_id"
+    job_posting_perk }o--|| job_posting : "job_posting_id"
+    job_qualification_requirement }o--|| job_posting : "job_posting_id"
     job_questionnaire }o--|| job_posting : "job_posting_id"
     job_questionnaire_question }o--|| job_questionnaire : "job_questionnaire_id"
+    job_recruiter_assignment }o--|| job_posting : "job_posting_id"
     job_skill_requirement }o--|| job_posting : "job_posting_id"
     organization_hierarchy }o--|| organization : "child_organization_id"
     organization_hierarchy }o--|| organization : "parent_organization_id"
@@ -174,7 +184,7 @@ erDiagram
 
 ## Foreign keys across schemas
 
-80 relationships (audit-column references excluded).
+90 relationships (audit-column references excluded).
 
 | From | Column | To |
 |:--|:--|:--|
@@ -223,22 +233,32 @@ erDiagram
 | `profile.candidate_profile` | `user_account_id` | `core.user_account` |
 | `profile.candidate_profile` | `summary_language_code` | `master.language` |
 | `profile.candidate_skill` | `skill_id` | `master.skill` |
+| `profile.candidate_work_experience` | `department_id` | `master.department` |
 | `profile.candidate_work_experience` | `employment_type_id` | `master.employment_type` |
 | `profile.candidate_work_experience` | `job_role_id` | `master.job_role` |
 | `profile.profile_view_history` | `viewer_user_account_id` | `core.user_account` |
 | `profile.profile_view_history` | `organization_id` | `recruitment.organization` |
 | `profile.recruiter_bookmark` | `user_account_id` | `core.user_account` |
 | `profile.recruiter_bookmark` | `organization_id` | `recruitment.organization` |
+| `profile.recruiter_search` | `user_account_id` | `core.user_account` |
+| `profile.recruiter_search` | `organization_id` | `recruitment.organization` |
 | `recruitment.application_status_history` | `changed_by_user_account_id` | `core.user_account` |
+| `recruitment.candidate_application` | `assigned_recruiter_user_account_id` | `core.user_account` |
 | `recruitment.candidate_application` | `candidate_document_id` | `profile.candidate_document` |
 | `recruitment.candidate_application` | `candidate_profile_id` | `profile.candidate_profile` |
 | `recruitment.job_position` | `filled_by_candidate_profile_id` | `profile.candidate_profile` |
 | `recruitment.job_posting` | `city_id` | `master.city` |
+| `recruitment.job_posting` | `department_id` | `master.department` |
 | `recruitment.job_posting` | `employment_type_id` | `master.employment_type` |
 | `recruitment.job_posting` | `industry_id` | `master.industry` |
 | `recruitment.job_posting` | `job_role_id` | `master.job_role` |
 | `recruitment.job_posting` | `description_language_code` | `master.language` |
 | `recruitment.job_posting` | `work_type_id` | `master.work_type` |
+| `recruitment.job_posting_location` | `city_id` | `master.city` |
+| `recruitment.job_posting_perk` | `job_perk_id` | `master.job_perk` |
+| `recruitment.job_qualification_requirement` | `qualification_id` | `master.qualification` |
+| `recruitment.job_recruiter_assignment` | `assigned_by_user_account_id` | `core.user_account` |
+| `recruitment.job_recruiter_assignment` | `recruiter_user_account_id` | `core.user_account` |
 | `recruitment.job_skill_requirement` | `skill_id` | `master.skill` |
 | `recruitment.organization` | `country_id` | `master.country` |
 | `recruitment.organization_identifier` | `verified_by_user_account_id` | `core.user_account` |

@@ -114,7 +114,7 @@
         "docs/phase-1-discover/03-feature-inventory.md",
         "docs/phase-1-discover/03-competitive-benchmark.md"
       ],
-      "note": "Competitors researched from their own pages on 2026-10-28: LinkedIn and one foundit page read in full (High); Naukri and foundit terms from search summaries of official pages that blocked the fetch (Medium). 17 capabilities compared, 6 gaps recorded and left unbuilt (DEC-26). Recruiter side only; compliance posture and pricing not researched."
+      "note": "Competitors researched from their own pages on 2026-10-28: LinkedIn and one foundit page read in full (High); Naukri and foundit terms from search summaries of official pages that blocked the fetch (Medium). 17 capabilities compared, 6 gaps recorded and left unbuilt (DEC-26). Recruiter side only; compliance posture and pricing not researched. Update 2026-11-04: saved searches, last-active, keyword search and the match percentage are now built (migrations 041, 042; DEC-35 to DEC-37)."
     },
     {
       "n": 4,
@@ -402,7 +402,7 @@
         "tests/test_br_decision_and_outreach.sql",
         "db/migrations/037_enforce_outreach_block_rule.sql"
       ],
-      "note": "40 rules (BR-001..027 from the register, BR-028..040 added from the docket), each with an owner role, an enforcement point checked against the live catalog (39 database, 1 reconciled), and a named test. All four rows of the BR-002 decision table are tested; BR-005 and BR-021 moved into the database (migration 037)."
+      "note": "46 rules (BR-001..027 from the register, BR-028..046 added from the docket and the recruiter portal), each with an owner role, an enforcement point checked against the live catalog (39 database, 1 reconciled), and a named test. All four rows of the BR-002 decision table are tested; BR-005 and BR-021 moved into the database (migration 037)."
     },
     {
       "n": 19,
@@ -433,7 +433,7 @@
         "scripts/run_nfr_checks.py",
         "scripts/lifecycle/tag_tests.py"
       ],
-      "note": "39 suites: 34 SQL, concurrency (4 tests, including the wallet function under 40 simultaneous debits), golden-dataset KPIs, benchmark harness, identifier crypto and an NFR measurement run. Every test file carries a Covers: header naming the requirement, rule and NFR IDs, checked by tag_tests.py --check; no requirement lacks a test or script, and no test lacks a requirement."
+      "note": "43 suites: 38 SQL, concurrency (4 tests, including the wallet function under 40 simultaneous debits), golden-dataset KPIs, benchmark harness, identifier crypto and an NFR measurement run. Every test file carries a Covers: header naming the requirement, rule and NFR IDs, checked by tag_tests.py --check; no requirement lacks a test or script, and no test lacks a requirement."
     },
     {
       "n": 21,

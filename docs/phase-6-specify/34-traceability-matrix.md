@@ -31,22 +31,22 @@ Links each requirement to its actors, linked rules, features, workflows, migrati
 | REQ-007 | The system shall record the actor's consent state and privacy preferences | ACT-01, ACT-03, ACT-08 | BR-004, FEAT-004, NFR-013, SEC-011, WF-11 | Should | 012 | test_administration.sql, test_audit_coverage.sql, test_candidate_privacy.sql, test_messaging.sql | Confirmed |
 | REQ-008 | The system shall maintain a single user identity capable of simultaneously holding a candidate profile and ... | ACT-01, ACT-03 | BR-001, FEAT-005, NFR-009, WF-02, WF-07 | Must | 002 | test_candidate_profile.sql, test_gig.sql | Confirmed |
 | REQ-009 | The system shall maintain canonical reference taxonomies (skill, city, country, qualification, role, indust... | ACT-01, ACT-02, ACT-07, ACT-08 | BR-005, FEAT-006, NFR-006, WF-01, WF-02, WF-03 | Must | 003, 004 | test_master_data.sql, test_seed_master_data.sql | Confirmed |
-| REQ-010 | The system shall maintain a candidate profile with headline, summary, experience, skills, education, locati... | ACT-01, ACT-03 | BR-006, DATA-002, FEAT-007, NFR-011, WF-02 | Must | 005, 010 | test_candidate_extensions.sql, test_candidate_profile.sql | Confirmed |
+| REQ-010 | The system shall maintain a candidate profile with headline, summary, experience, skills, education, locati... | ACT-01, ACT-03 | BR-006, DATA-002, FEAT-007, NFR-011, WF-02 | Must | 005, 010 | test_candidate_extensions.sql, test_candidate_profile.sql, test_candidate_search_fields.sql | Confirmed |
 | REQ-011 | The system shall compute and store a profile-completeness score for a candidate profile | ACT-01, ACT-03 | BR-007, FEAT-008, NFR-011, WF-02 | Should | 010 | test_candidate_extensions.sql | Confirmed |
 | REQ-012 | The system shall store candidate documents (resumes) with type, MIME type, size, checksum and archival state | ACT-01, ACT-03 | BR-008, FEAT-009, NFR-011, SEC-009, WF-02 | Must | 006 | test_candidate_document.sql | Confirmed |
 | REQ-013 | The system shall track candidate skill proficiency and years of experience per skill | ACT-01, ACT-03 | BR-009, FEAT-007, NFR-002, WF-02 | Must | 005 | test_candidate_profile.sql | Confirmed |
-| REQ-014 | The system shall support recruiter-side candidate search by skill, experience, location and visibility | ACT-02, ACT-04, ACT-05, ACT-06 | BR-010, FEAT-010, NFR-002, NFR-005, WF-04, WF-14 | Must | - | test_access_control.sql | Confirmed |
+| REQ-014 | The system shall support recruiter-side candidate search by skill, experience, location and visibility | ACT-02, ACT-04, ACT-05, ACT-06 | BR-010, FEAT-010, NFR-002, NFR-005, WF-04, WF-14 | Must | - | test_access_control.sql, test_candidate_search_fields.sql, test_search_and_pipeline.sql | Confirmed |
 | REQ-015 | The system shall maintain a corporate organisation with type, hierarchy, locations, identifiers and members | ACT-02, ACT-04, ACT-06 | BR-011, FEAT-011, NFR-012, WF-08 | Must | 007, 013 | test_organization.sql, test_organization_extensions.sql | Confirmed |
 | REQ-016 | The system shall record a recruiter-to-client organisation mapping | ACT-02, ACT-04 | BR-011, FEAT-011, SEC-002, WF-08 | Could | 013 | test_organization_extensions.sql | Confirmed |
-| REQ-017 | The system shall allow an authorised recruiter or organisation administrator to post a job requirement with... | ACT-02, ACT-04 | BR-012, FEAT-012, NFR-003, NFR-012, WF-03 | Must | 008 | test_job_posting.sql | Confirmed |
-| REQ-018 | The system shall support a structured job questionnaire and per-application question responses | ACT-02, ACT-01 | BR-013, DATA-004, FEAT-013, WF-03, WF-04 | Should | 011 | test_job_questionnaire.sql | Confirmed |
-| REQ-019 | The system shall allow a candidate to apply to a published job exactly once | ACT-01, ACT-02 | BR-014, FEAT-014, NFR-002, NFR-009, WF-04 | Must | 009 | test_candidate_application.sql | Confirmed |
+| REQ-017 | The system shall allow an authorised recruiter or organisation administrator to post a job requirement with... | ACT-02, ACT-04 | BR-012, FEAT-012, NFR-003, NFR-012, WF-03 | Must | 008 | test_job_posting.sql, test_job_posting_extras.sql | Confirmed |
+| REQ-018 | The system shall support a structured job questionnaire and per-application question responses | ACT-02, ACT-01 | BR-013, DATA-004, FEAT-013, WF-03, WF-04 | Should | 011 | test_job_posting_extras.sql, test_job_questionnaire.sql | Confirmed |
+| REQ-019 | The system shall allow a candidate to apply to a published job exactly once | ACT-01, ACT-02 | BR-014, FEAT-014, NFR-002, NFR-009, WF-04 | Must | 009 | test_candidate_application.sql, test_search_and_pipeline.sql | Confirmed |
 | REQ-020 | The system shall record an application with its source, cover letter, screening answers and recruitment stage | ACT-01, ACT-02, ACT-07 | BR-015, DATA-001, FEAT-014, NFR-009, WF-04, WF-05 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql, test_state_machines.sql | Confirmed |
-| REQ-021 | The system shall record every change to an application's recruitment stage, with actor, previous value, new... | ACT-02, ACT-04 | BR-016, FEAT-015, NFR-009, SEC-003, WF-05 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql | Confirmed |
-| REQ-022 | The system shall maintain the recruitment pipeline stage set (`applied`, `shortlisted`, `interviewed`, `off... | ACT-01, ACT-02, ACT-04 | BR-015, DATA-001, FEAT-015, WF-05 | Must | 009 | test_candidate_application.sql, test_state_machines.sql | Confirmed |
+| REQ-021 | The system shall record every change to an application's recruitment stage, with actor, previous value, new... | ACT-02, ACT-04 | BR-016, FEAT-015, NFR-009, SEC-003, WF-05 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql, test_search_and_pipeline.sql | Confirmed |
+| REQ-022 | The system shall maintain the recruitment pipeline stage set (`applied`, `shortlisted`, `interviewed`, `off... | ACT-01, ACT-02, ACT-04 | BR-015, DATA-001, FEAT-015, WF-05 | Must | 009 | test_candidate_application.sql, test_search_and_pipeline.sql, test_state_machines.sql | Confirmed |
 | REQ-023 | The system shall support job-feed matching of candidates to published jobs by role, city, arrangement and s... | ACT-01, ACT-03 | BR-017, FEAT-016, NFR-002, WF-04 | Must | - | - | Confirmed |
 | REQ-024 | The system shall support a recruiter pipeline funnel aggregation by application stage | ACT-02, ACT-04 | BR-017, FEAT-017, NFR-003, WF-05 | Should | - | test_golden_kpis.py | Confirmed |
-| REQ-025 | The system shall support agency consultants requesting to source for a job, and the employer accepting or d... | ACT-05, ACT-04 | BR-018, FEAT-018, SEC-002, WF-06 | Should | 016 | test_sourcing.sql | Confirmed |
+| REQ-025 | The system shall support agency consultants requesting to source for a job, and the employer accepting or d... | ACT-05, ACT-04 | BR-018, FEAT-018, SEC-002, WF-06 | Should | 016 | test_job_posting_extras.sql, test_sourcing.sql | Confirmed |
 | REQ-026 | The system shall permit a consultant to submit candidates only for jobs explicitly open to consultants | ACT-05 | BR-019, FEAT-018, SEC-002, WF-06 | Must | 016 | test_business_rules.sql, test_sourcing.sql | Confirmed |
 | REQ-027 | The system shall record a consultant's candidate submission and its progression to hired | ACT-05, ACT-04 | BR-020, FEAT-018, NFR-009, WF-06 | Should | 016 | test_sourcing.sql | Confirmed |
 | REQ-028 | The system shall support batched outreach to candidates with per-recipient delivery state | ACT-05, ACT-02 | BR-021, FEAT-024, NFR-008, WF-06 | Should | 016 | test_sourcing.sql | Confirmed |
@@ -65,13 +65,13 @@ Links each requirement to its actors, linked rules, features, workflows, migrati
 | BR-007 | Profile completeness is derived from the presence of headline, summary, skills, education, experience, resu... | ACT-01 | REQ-011 | Should | 010 | test_candidate_extensions.sql | Confirmed |
 | BR-008 | A candidate may have at most one active primary resume; only a resume may be marked primary | ACT-01, ACT-03 | REQ-012 | Must | 006 | test_candidate_document.sql | Confirmed |
 | BR-009 | A skill claim carries a proficiency level and optional per-skill experience in years | ACT-01 | REQ-013 | Must | 005 | test_candidate_profile.sql | Confirmed |
-| BR-010 | Candidate search honours profile visibility and the block rules in BR-021 | ACT-02, ACT-04, ACT-06 | REQ-014 | Must | - | test_access_control.sql, test_candidate_privacy.sql | Confirmed |
+| BR-010 | Candidate search honours profile visibility and the block rules in BR-021 | ACT-02, ACT-04, ACT-06 | REQ-014 | Must | - | test_access_control.sql, test_candidate_privacy.sql, test_candidate_search_fields.sql, test_search_and_pipeline.sql | Confirmed |
 | BR-011 | An organisation has one type, may have a hierarchy, and holds its own locations and legal identifiers | ACT-02, ACT-04, ACT-06 | REQ-015 | Must | 007 | test_organization.sql, test_organization_extensions.sql | Confirmed |
-| BR-012 | Salary fields are all-or-none: either all salary and currency and period fields are populated, or none are | ACT-02, ACT-04 | REQ-017 | Must | 008 | test_job_posting.sql | Confirmed |
+| BR-012 | Salary fields are all-or-none: either all salary and currency and period fields are populated, or none are | ACT-02, ACT-04 | REQ-017 | Must | 008 | test_job_posting.sql, test_job_posting_extras.sql | Confirmed |
 | BR-013 | A job carries at most one questionnaire; a filled position requires a candidate answer | ACT-02, ACT-01 | REQ-018 | Should | 011 | test_job_questionnaire.sql | Confirmed |
 | BR-014 | A candidate may hold at most one application to a given job | ACT-01 | REQ-019 | Must | 009 | test_candidate_application.sql | Confirmed |
-| BR-015 | An application stage is one of the seven permitted values | ACT-01, ACT-02 | REQ-020, REQ-022 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql, test_state_machines.sql | Confirmed |
-| BR-016 | Every stage change is captured in `application_status_history` with previous and new values; a change to th... | ACT-02, ACT-04 | REQ-021 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql | Confirmed |
+| BR-015 | An application stage is one of the seven permitted values | ACT-01, ACT-02 | REQ-020, REQ-022 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql, test_search_and_pipeline.sql, test_state_machines.sql | Confirmed |
+| BR-016 | Every stage change is captured in `application_status_history` with previous and new values; a change to th... | ACT-02, ACT-04 | REQ-021 | Must | 009 | test_candidate_application.sql, test_domains_and_transitions.sql, test_search_and_pipeline.sql | Confirmed |
 | BR-017 | Funnel and feed aggregations are derived from the authoritative application and job tables, not from denorm... | ACT-02, ACT-04 | REQ-023, REQ-024 | Should | - | test_golden_kpis.py | Confirmed |
 | BR-018 | A consultant sourcing request is unique per (job, consultant); a decision is recorded iff the request is ac... | ACT-05, ACT-04 | REQ-025 | Should | 016 | test_sourcing.sql | Confirmed |
 | BR-019 | A consultant may act only on a job whose consultant policy is open | ACT-05 | REQ-026 | Must | 016 | test_business_rules.sql, test_sourcing.sql | Confirmed |
@@ -92,9 +92,9 @@ Links each requirement to its actors, linked rules, features, workflows, migrati
 | SEC-007 | Session tokens shall be stored hashed | ACT-01..ACT-08 | REQ-003 | Must | 002 | test_access_control.sql, test_identity.sql, test_integration_structures.sql | Confirmed — `ck_user_session_token_hash_ |
 | SEC-008 | Login attempts exceeding the device entitlement shall be refused and recorded | ACT-01..ACT-08 | REQ-004 | Must | 015 | test_concurrency.py, test_licences.sql | Confirmed |
 | SEC-009 | Uploaded documents shall be size- and type-constrained and integrity-checked | ACT-01, ACT-03 | REQ-012 | Must | 006 | test_candidate_document.sql | Confirmed |
-| SEC-010 | Candidates shall be able to block, and be blocked by, users and organisations, and visibility checks shall ... | ACT-01, ACT-02, ACT-04 | REQ-010 | Must | 012 | test_administration.sql, test_candidate_privacy.sql, test_security.sql | Confirmed — function-scoped: applies onl |
+| SEC-010 | Candidates shall be able to block, and be blocked by, users and organisations, and visibility checks shall ... | ACT-01, ACT-02, ACT-04 | REQ-010 | Must | 012 | test_administration.sql, test_candidate_privacy.sql, test_candidate_search_fields.sql, test_search_and_pipeline.sql, test_security.sql | Confirmed — function-scoped: applies onl |
 | SEC-011 | Consent and privacy preference state shall be queryable to support disclosure decisions | ACT-01, ACT-03, ACT-08 | REQ-007 | Should | 012 | test_administration.sql, test_audit_coverage.sql, test_candidate_privacy.sql | Confirmed |
-| SEC-012 | PII columns shall carry a sensitivity classification | ACT-08 | REQ-010, REQ-012 | Should | - | test_classification.sql, test_identifier_encryption.sql | Confirmed — every column of every base t |
+| SEC-012 | PII columns shall carry a sensitivity classification | ACT-08 | REQ-010, REQ-012 | Should | - | test_candidate_search_fields.sql, test_classification.sql, test_identifier_encryption.sql | Confirmed — every column of every base t |
 | SEC-013 | Data access to sensitive candidate fields shall be masked for unauthorised viewers | ACT-01, ACT-02, ACT-04 | REQ-010 | Should | - | test_access_control.sql, test_classification.sql | Confirmed for support staff — `core.mask |
 | SEC-014 | Least-privilege database roles and row-level security shall separate application, reporting and administrat... | ACT-08 | REQ-001 | Should | - | test_access_control.sql, test_security.sql | Confirmed — five NOLOGIN roles with gran |
 | DATA-001 | Enumerated business states shall be stored as constrained codes, not free text | ACT-08 | - | Must | 009 | test_constraints.sql, test_enumerations.sql | Confirmed |
@@ -152,16 +152,19 @@ Links each requirement to its actors, linked rules, features, workflows, migrati
 | `tests/test_access_control.sql` | 10 |
 | `tests/test_sourcing.sql` | 9 |
 | `tests/test_licences.sql` | 8 |
+| `tests/test_search_and_pipeline.sql` | 8 |
 | `tests/test_integration_maintenance.sql` | 8 |
 | `tests/test_candidate_application.sql` | 7 |
 | `tests/test_identity.sql` | 6 |
 | `tests/test_concurrency.py` | 6 |
 | `tests/test_candidate_privacy.sql` | 6 |
 | `tests/test_candidate_profile.sql` | 5 |
+| `tests/test_candidate_search_fields.sql` | 5 |
 | `tests/test_domains_and_transitions.sql` | 5 |
 | `tests/test_security.sql` | 5 |
 | `tests/test_audit_coverage.sql` | 4 |
 | `tests/test_candidate_extensions.sql` | 4 |
+| `tests/test_job_posting_extras.sql` | 4 |
 | `tests/test_state_machines.sql` | 4 |
 | `tests/test_business_rules.sql` | 4 |
 | `tests/test_candidate_document.sql` | 3 |

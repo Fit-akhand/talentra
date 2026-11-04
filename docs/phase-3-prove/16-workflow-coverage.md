@@ -9,28 +9,28 @@ For every workflow step: can the data be **stored** (a table, function or view t
 
 | Workflow | Steps | Steps backed by a database object or verified artefact | Steps owned elsewhere | Objects cited | Objects that do not exist | Sensitive action classes evidenced (docket B79) |
 |:--|--:|--:|--:|--:|--:|:--|
-| WF-01 User registration and authentication | 7 | 7 | 0 | 10 | 0 | classes 1, 2, 5 |
+| WF-01 User registration and authentication | 7 | 7 | 0 | 11 | 0 | classes 1, 2, 5 |
 | WF-02 Candidate profile creation and completion | 8 | 8 | 0 | 17 | 0 | none: profile edits are not a sensitive class; document access is recorded in profile.candidate_activity_log |
-| WF-03 Job posting creation and publication | 6 | 6 | 0 | 14 | 0 | none: publishing a job is not a sensitive class; the status change is kept in the row history |
-| WF-04 Candidate discovery and job application | 7 | 7 | 0 | 11 | 0 | none: creating an application is not a sensitive class; its stage history is class 12 under WF-05 |
-| WF-05 Recruitment pipeline management | 5 | 4 | 1 | 2 | 0 | classes 12 |
+| WF-03 Job posting creation and publication | 8 | 8 | 0 | 20 | 0 | none: publishing a job is not a sensitive class; the status change is kept in the row history |
+| WF-04 Candidate discovery and job application | 7 | 7 | 0 | 12 | 0 | none: creating an application is not a sensitive class; its stage history is class 12 under WF-05 |
+| WF-05 Recruitment pipeline management | 7 | 6 | 1 | 4 | 0 | classes 12 |
 | WF-06 Agency consultant sourcing | 5 | 5 | 0 | 7 | 0 | none: consultant requests are business records with their own status history, not a sensitive class |
 | WF-07 Gig marketplace engagement | 6 | 6 | 0 | 10 | 0 | none: gig requests and assignments are business records, not a sensitive class |
-| WF-08 Organisation and member administration | 7 | 7 | 0 | 9 | 0 | classes 6, 7 |
+| WF-08 Organisation and member administration | 7 | 7 | 0 | 10 | 0 | classes 6, 7 |
 | WF-09 Licensing, subscription and entitlements | 8 | 8 | 0 | 9 | 0 | classes 14 |
 | WF-10 Session management and revocation | 5 | 5 | 0 | 6 | 0 | classes 3, 4 |
 | WF-11 Notification, consent and privacy management | 8 | 7 | 1 | 11 | 0 | classes 9, 10 |
 | WF-12 Platform operations, validation and backup | 7 | 7 | 0 | 1 | 0 | none: operations; the restore check is recorded in audit.maintenance_run |
 | WF-13 Analytical mart refresh | 4 | 4 | 0 | 9 | 0 | none: operations; each run is recorded in audit.maintenance_run |
 | WF-14 Profile download and credit consumption | 6 | 5 | 1 | 8 | 0 | classes 11, 13 |
-| WF-15 Integration exchange with an external system | 7 | 6 | 1 | 9 | 0 | none: failures are written to audit.system_error_log; the exchange itself is not a sensitive class |
+| WF-15 Integration exchange with an external system | 7 | 6 | 1 | 12 | 0 | none: failures are written to audit.system_error_log; the exchange itself is not a sensitive class |
 | WF-16 Scheduled maintenance, retention and erasure | 5 | 5 | 0 | 11 | 0 | classes 7 |
 | WF-17 Administrative support and impersonation | 6 | 6 | 0 | 8 | 0 | classes 8 |
 | WF-18 Candidate development: courses, assessments and resume templates | 5 | 5 | 0 | 6 | 0 | none: learning records are not a sensitive class |
-| WF-19 Recruiter search, bookmarks and profile views | 6 | 6 | 0 | 5 | 0 | classes 11 |
-| WF-20 Community, support and referrals | 5 | 4 | 1 | 5 | 0 | none: community content is not a sensitive class |
+| WF-19 Recruiter search, bookmarks and profile views | 6 | 6 | 0 | 12 | 0 | classes 11 |
+| WF-20 Community, support and referrals | 5 | 4 | 1 | 6 | 0 | none: community content is not a sensitive class |
 | WF-21 Reference data and rule maintenance | 6 | 6 | 0 | 15 | 0 | none: changes arrive as reviewed migrations |
-| **total** | **129** | **124** | **5** | | | |
+| **total** | **133** | **128** | **5** | | | |
 
 ## Steps that cite no table, and how each is accounted for
 
@@ -39,7 +39,7 @@ Every step that names no table, function or view is either backed by another ver
 | Workflow | Step | Disposition | Reference or owner | Text |
 |:--|--:|:--|:--|:--|
 | WF-01 | 4 | state_machine | core.user_account | on activation set `account_status = 'active'` |
-| WF-03 | 5 | state_machine | recruitment.job_posting | transition `job_status` to `published` and set `published_at` |
+| WF-03 | 7 | state_machine | recruitment.job_posting | transition `job_status` to `published` and set `published_at` |
 | WF-04 | 1 | query | db/queries/01_candidate_multicriteria_search.sql | Recruiter path: execute `db/queries/01_candidate_multicriteria_search.sql` — filter on `profile_status = 'active'`, `vis |
 | WF-04 | 3 | workflow_ref | WF-14 | optionally download an unlocked profile → WF-14, which deducts credit |
 | WF-04 | 4 | query | db/queries/02_job_feed_matching.sql | candidate path: execute `db/queries/02_job_feed_matching.sql` for the job feed |
@@ -79,18 +79,15 @@ None.
 
 ## Tables no workflow touches
 
-6 of 113 base tables are cited by no workflow. Either a workflow is missing or the table is unused.
+0 of 123 base tables are cited by no workflow. Either a workflow is missing or the table is unused.
 
 | Schema | Tables |
 |:--|:--|
-| `core` | `identity_verification` |
-| `recruitment` | `company_review_summary` |
-| `messaging` | `external_reference`, `legacy_field_mapping`, `share_event`, `sync_conflict` |
 
 ## Gate G3 condition: workflow coverage
 
 - Workflows whose every cited table exists: **21 / 21**.
-- Main-flow steps backed by a database object: **124 / 129**.
-- Tables reached by at least one workflow: **107 / 113**.
+- Main-flow steps backed by a database object: **128 / 133**.
+- Tables reached by at least one workflow: **123 / 123**.
 - Steps owned outside the database (Application or Operations): **5**, each with a named owner (roles assigned by the assistant, DEC-30).
 - Steps with neither a backing artefact nor an owner: **0**. The playbook's test (100% or a logged gap with an owner) is met.

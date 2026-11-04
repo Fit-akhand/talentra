@@ -113,6 +113,8 @@ or a **Could-have differentiator that is fully implemented**. Priority is never 
 | FEAT-042 | Community posts, reactions, support tickets, referrals, FAQs | — | ACT-01, ACT-03, ACT-08 | WF-11 | Could | Optional | **Implemented** | `db/migrations/018:292-440` | Tables exist with constrained statuses. **No requirement and no test covers them** — the messaging schema extends beyond the evidenced product scope |
 | FEAT-043 | Integration outbox with idempotency, retry with backoff and dead letter | NFR-027 | ACT-08 | WF-15 | Should | Should-have | **Implemented** | `db/migrations/031`, `tests/test_integration_maintenance.sql` | Added 2026-10-28; the docket's nine boundaries are rows in `messaging.integration_boundary` |
 | FEAT-044 | Scheduled maintenance: retention purge, inactive-account erasure, mart refresh | NFR-017, NFR-020 | ACT-08 | WF-16 | Should | Should-have | **Implemented** | `db/migrations/020`, `031`, `docker-compose.yml` | Added 2026-10-28; retention periods are the assistant's (DEC-23) |
+| FEAT-045 | Recruiter profile search: keywords and boolean mode, exclusions, filters (experience, location, skills, education, department, notice period, pay, recent activity), match percentage, recent and saved searches | REQ-014 | ACT-02, ACT-04, ACT-05 | WF-19 | Should | Should-have | **Implemented** | `db/migrations/041`, `042`; `tests/test_candidate_search_fields.sql`, `tests/test_search_and_pipeline.sql` | Added 2026-11-04 (DEC-35 to DEC-37). Gender is private and never a filter; pay is shown only when the candidate reveals it; the match percentage is a documented heuristic, not a model |
+| FEAT-046 | Requirement extras: department, several locations, perks, structured education, show-salary flag, assigned recruiters, the sourced stage and the recruiter on an application | REQ-017, REQ-021 | ACT-02, ACT-04, ACT-06 | WF-03, WF-05 | Should | Should-have | **Implemented** | `db/migrations/040`, `042`; `tests/test_job_posting_extras.sql`, `tests/test_search_and_pipeline.sql` | Added 2026-11-04 (DEC-34) |
 
 ---
 
@@ -123,7 +125,7 @@ or a **Could-have differentiator that is fully implemented**. Priority is never 
 | Priority | Count | FEAT IDs |
 |:--|--:|:--|
 | **Must** | 22 | 001, 002, 003, 005, 006, 007, 009, 010, 011, 012, 014, 015, 016, 019, 020, 022, 023, 027, 030, 038, 040, 041 |
-| **Should** | 17 | 004, 008, 013, 017, 018, 021, 024, 025, 026, 031, 032, 033, 034, 037, 039, 043, 044 |
+| **Should** | 19 | 004, 008, 013, 017, 018, 021, 024, 025, 026, 031, 032, 033, 034, 037, 039, 043, 044, 045, 046 |
 | **Could** | 5 | 028, 029, 035, 036, 042 |
 | **Won't** | 0 | — |
 
@@ -132,7 +134,7 @@ or a **Could-have differentiator that is fully implemented**. Priority is never 
 | Class | Count | FEAT IDs |
 |:--|--:|:--|
 | Must-have | 17 | 001, 002, 003, 006, 007, 009, 010, 011, 012, 014, 016, 019, 030, 037, 038, 040, 041 |
-| Should-have | 12 | 004, 008, 013, 017, 024, 025, 026, 032, 033, 039, 043, 044 |
+| Should-have | 14 | 004, 008, 013, 017, 024, 025, 026, 032, 033, 039, 043, 044, 045, 046 |
 | Differentiator | 11 | 005, 015, 018, 020, 021, 022, 023, 027, 031, 034, 036 |
 | Optional | 4 | 028, 029, 035, 042 |
 | *(features with no class)* | 0 | — |
@@ -141,7 +143,7 @@ or a **Could-have differentiator that is fully implemented**. Priority is never 
 
 | Status | Count | FEAT IDs |
 |:--|--:|:--|
-| Implemented | 43 | All others |
+| Implemented | 45 | All others |
 | Partial | 1 | 036 |
 | Documented only | 0 | — |
 | Planned | 0 | — |
@@ -201,7 +203,7 @@ data-objects list touches the feature. The mapping is maintained in **two** plac
 §2 and attribute 14 of each workflow in [`docs/phase-1-discover/05-workflows.md`](05-workflows.md) §4 — and the two are checked against
 each other in both directions. A feature row and a workflow that disagree is a defect, not a variant: the
 disagreement is resolved by re-reading the workflow's main flow, not by preferring one document. The current
-state is **44/44 features in exact two-way agreement, 0 discrepancies** (see
+state is **46/46 features in exact two-way agreement, 0 discrepancies** (see
 [`docs/phase-1-discover/phase-report.md`](phase-report.md) §7.2).
 
 ---
@@ -307,17 +309,17 @@ title, the access date, and a confidence rating, in the format established in
 
 | Check | Method | Result |
 |:--|:--|:--|
-| FEAT ID uniqueness | Manual + scripted scan of the register | 44 IDs, 0 duplicates |
-| Every feature links ≥1 requirement | Scan of the `Requirements` column | 44/44 |
-| Every feature links ≥1 actor | Scan of the `Actors` column | 44/44 |
-| Every feature links ≥1 workflow | Scan of the `Workflows` column | 44/44 |
+| FEAT ID uniqueness | Manual + scripted scan of the register | 46 IDs, 0 duplicates |
+| Every feature links ≥1 requirement | Scan of the `Requirements` column | 46/46 |
+| Every feature links ≥1 actor | Scan of the `Actors` column | 46/46 |
+| Every feature links ≥1 workflow | Scan of the `Workflows` column | 46/46 |
 | Must-have → workflow coverage | Cross-check against [`docs/phase-1-discover/05-workflows.md`](05-workflows.md) §3 | 22/22 = 100% |
 | Every requirement → ≥1 feature | Scan of §6 | 48/48 (34 REQ + 14 SEC) |
-| Status assigned to every feature | Scan of the `Status` column | 44/44 |
-| Classification assigned to every feature | Scan of the `Class` column | 44/44 |
+| Status assigned to every feature | Scan of the `Status` column | 46/46 |
+| Classification assigned to every feature | Scan of the `Class` column | 46/46 |
 | Implementation-status honesty | Every non-`Implemented` feature cites the specific missing object | 1/1 |
 
-**Verification note.** The 44 unique `FEAT-NNN` identifiers in §2 are the source of truth; the summary
+**Verification note.** The 46 unique `FEAT-NNN` identifiers in §2 are the source of truth; the summary
 tables in §3.1–§3.3 are derived from them and were recomputed to agree. A reader reconciling a count
 against the register and finding a disagreement should treat the register row as correct and the summary as
 the defect — the same rule the Phase 2C/2D/2E audits applied to the engineering dossiers.

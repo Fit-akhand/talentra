@@ -5,7 +5,7 @@
 
 Seven checks per table: (1) primary key, (2) every column defined, (3) every column classified, (4) lifecycle policy row, (5) every foreign key leads an index (audit actor columns, references to master data and the analytics schema are exempt, DEC-33), (6) rows present in the seed, (7) every nullable column says what NULL means. The data-level checks (formats, references, reconciliation) are the validator's fifteen (`scripts/validate_data.py`).
 
-**113 of 113 tables score 7 of 7.** Mean score 7.00.
+**123 of 123 tables score 7 of 7.** Mean score 7.00.
 
 ## Waived checks
 
@@ -65,9 +65,11 @@ Seven checks per table: (1) primary key, (2) every column defined, (3) every col
 | `gig.gig_worker_service` | 7 |
 | `master.city` | 7 |
 | `master.country` | 7 |
+| `master.department` | 7 |
 | `master.employment_type` | 7 |
 | `master.enumeration_value` | 7 |
 | `master.industry` | 7 |
+| `master.job_perk` | 7 |
 | `master.job_role` | 7 |
 | `master.language` | 7 |
 | `master.qualification` | 7 |
@@ -96,13 +98,16 @@ Seven checks per table: (1) primary key, (2) every column defined, (3) every col
 | `profile.candidate_activity_log` | 7 |
 | `profile.candidate_assessment` | 7 |
 | `profile.candidate_assessment_score` | 7 |
+| `profile.candidate_diversity_profile` | 7 |
 | `profile.candidate_document` | 7 |
 | `profile.candidate_education` | 7 |
+| `profile.candidate_job_preference` | 7 |
 | `profile.candidate_language` | 7 |
 | `profile.candidate_location` | 7 |
 | `profile.candidate_profile` | 7 |
 | `profile.candidate_profile_completion` | 7 |
 | `profile.candidate_project` | 7 |
+| `profile.candidate_search_document` | 7 |
 | `profile.candidate_search_history` | 7 |
 | `profile.candidate_skill` | 7 |
 | `profile.candidate_work_experience` | 7 |
@@ -110,6 +115,7 @@ Seven checks per table: (1) primary key, (2) every column defined, (3) every col
 | `profile.course_enrolment` | 7 |
 | `profile.profile_view_history` | 7 |
 | `profile.recruiter_bookmark` | 7 |
+| `profile.recruiter_search` | 7 |
 | `profile.resume_template` | 7 |
 | `recruitment.application_question_response` | 7 |
 | `recruitment.application_status_history` | 7 |
@@ -118,8 +124,12 @@ Seven checks per table: (1) primary key, (2) every column defined, (3) every col
 | `recruitment.company_review_summary` | 7 |
 | `recruitment.job_position` | 7 |
 | `recruitment.job_posting` | 7 |
+| `recruitment.job_posting_location` | 7 |
+| `recruitment.job_posting_perk` | 7 |
+| `recruitment.job_qualification_requirement` | 7 |
 | `recruitment.job_questionnaire` | 7 |
 | `recruitment.job_questionnaire_question` | 7 |
+| `recruitment.job_recruiter_assignment` | 7 |
 | `recruitment.job_skill_requirement` | 7 |
 | `recruitment.organization` | 7 |
 | `recruitment.organization_hierarchy` | 7 |

@@ -1,52 +1,248 @@
 {
  "_note": "Disposition of every workflow step that cites no table, function or view (playbook step 16: 100% coverage, or a logged gap with an owner). Owners are roles, assigned by the assistant (DEC-30). kinds: state_machine (ref = entity in master.status_transition), query/file (ref = path that must exist), function/view (ref = schema.name), column (ref = schema.table.column), column_default, workflow_ref (ref = WF-id), application, operations (no database object; named owner).",
  "steps": {
-  "WF-01:4": {"kind": "state_machine", "ref": "core.user_account"},
-  "WF-03:5": {"kind": "state_machine", "ref": "recruitment.job_posting"},
-  "WF-04:1": {"kind": "query", "ref": "db/queries/01_candidate_multicriteria_search.sql"},
-  "WF-04:3": {"kind": "workflow_ref", "ref": "WF-14"},
-  "WF-04:4": {"kind": "query", "ref": "db/queries/02_job_feed_matching.sql"},
-  "WF-04:7": {"kind": "column_default", "ref": "recruitment.candidate_application.application_status"},
-  "WF-05:3": {"kind": "column", "ref": "recruitment.application_status_history.change_reason"},
-  "WF-05:4": {"kind": "application", "owner": "Application", "note": "headcount counter on the job; the schema stores positions but no code increments a filled count"},
-  "WF-05:5": {"kind": "query", "ref": "db/queries/03_recruiter_pipeline_funnel.sql"},
-  "WF-06:2": {"kind": "state_machine", "ref": "sourcing.consultant_sourcing_request"},
-  "WF-06:4": {"kind": "state_machine", "ref": "sourcing.sourcing_submission"},
-  "WF-07:3": {"kind": "state_machine", "ref": "gig.gig_application"},
-  "WF-07:5": {"kind": "state_machine", "ref": "gig.gig_assignment"},
-  "WF-08:7": {"kind": "workflow_ref", "ref": "WF-09"},
-  "WF-09:5": {"kind": "state_machine", "ref": "commercial.payment_order"},
-  "WF-10:3": {"kind": "function", "ref": "core.revoke_user_session"},
-  "WF-11:5": {"kind": "application", "owner": "Application", "note": "the sender; the status column is a recorded exemption because provider callbacks arrive out of order"},
-  "WF-11:6": {"kind": "workflow_ref", "ref": "WF-15"},
-  "WF-12:1": {"kind": "file", "ref": "docker-compose.yml", "owner": "Operations"},
-  "WF-12:2": {"kind": "file", "ref": "db/migrations", "owner": "Operations"},
-  "WF-12:3": {"kind": "file", "ref": "scripts/generate_data.py", "owner": "Operations"},
-  "WF-12:4": {"kind": "file", "ref": "scripts/run_all_tests.py", "owner": "Operations"},
-  "WF-12:5": {"kind": "file", "ref": "scripts/validate_data.py", "owner": "Operations"},
-  "WF-12:6": {"kind": "file", "ref": "scripts/run_benchmarks.py", "owner": "Operations"},
-  "WF-12:7": {"kind": "file", "ref": "scripts/backup_restore.sh", "owner": "Operations"},
-  "WF-13:3": {"kind": "query", "ref": "db/queries/10_analytics_time_to_hire_kpi.sql"},
-  "WF-13:4": {"kind": "view", "ref": "audit.ops_job_freshness"},
-  "WF-14:2": {"kind": "function", "ref": "commercial.download_candidate_profile"},
-  "WF-14:6": {"kind": "application", "owner": "Application", "note": "serving the document bytes from storage"},
-  "WF-15:3": {"kind": "application", "owner": "Application", "note": "the call to the external system; the outbox around it is in the database"},
-  "WF-17:4": {"kind": "function", "ref": "audit.log_change"},
-  "WF-17:6": {"kind": "state_machine", "ref": "messaging.support_ticket"},
-  "WF-18:4": {"kind": "workflow_ref", "ref": "WF-02"},
-  "WF-19:5": {"kind": "workflow_ref", "ref": "WF-14"},
-  "WF-20:5": {"kind": "application", "owner": "Application", "note": "paying out the reward"}
+  "WF-01:4": {
+   "kind": "state_machine",
+   "ref": "core.user_account"
+  },
+  "WF-04:1": {
+   "kind": "query",
+   "ref": "db/queries/01_candidate_multicriteria_search.sql"
+  },
+  "WF-04:3": {
+   "kind": "workflow_ref",
+   "ref": "WF-14"
+  },
+  "WF-04:4": {
+   "kind": "query",
+   "ref": "db/queries/02_job_feed_matching.sql"
+  },
+  "WF-04:7": {
+   "kind": "column_default",
+   "ref": "recruitment.candidate_application.application_status"
+  },
+  "WF-05:3": {
+   "kind": "column",
+   "ref": "recruitment.application_status_history.change_reason"
+  },
+  "WF-05:4": {
+   "kind": "application",
+   "owner": "Application",
+   "note": "headcount counter on the job; the schema stores positions but no code increments a filled count"
+  },
+  "WF-05:5": {
+   "kind": "query",
+   "ref": "db/queries/03_recruiter_pipeline_funnel.sql"
+  },
+  "WF-06:2": {
+   "kind": "state_machine",
+   "ref": "sourcing.consultant_sourcing_request"
+  },
+  "WF-06:4": {
+   "kind": "state_machine",
+   "ref": "sourcing.sourcing_submission"
+  },
+  "WF-07:3": {
+   "kind": "state_machine",
+   "ref": "gig.gig_application"
+  },
+  "WF-07:5": {
+   "kind": "state_machine",
+   "ref": "gig.gig_assignment"
+  },
+  "WF-08:7": {
+   "kind": "workflow_ref",
+   "ref": "WF-09"
+  },
+  "WF-09:5": {
+   "kind": "state_machine",
+   "ref": "commercial.payment_order"
+  },
+  "WF-10:3": {
+   "kind": "function",
+   "ref": "core.revoke_user_session"
+  },
+  "WF-11:5": {
+   "kind": "application",
+   "owner": "Application",
+   "note": "the sender; the status column is a recorded exemption because provider callbacks arrive out of order"
+  },
+  "WF-11:6": {
+   "kind": "workflow_ref",
+   "ref": "WF-15"
+  },
+  "WF-12:1": {
+   "kind": "file",
+   "ref": "docker-compose.yml",
+   "owner": "Operations"
+  },
+  "WF-12:2": {
+   "kind": "file",
+   "ref": "db/migrations",
+   "owner": "Operations"
+  },
+  "WF-12:3": {
+   "kind": "file",
+   "ref": "scripts/generate_data.py",
+   "owner": "Operations"
+  },
+  "WF-12:4": {
+   "kind": "file",
+   "ref": "scripts/run_all_tests.py",
+   "owner": "Operations"
+  },
+  "WF-12:5": {
+   "kind": "file",
+   "ref": "scripts/validate_data.py",
+   "owner": "Operations"
+  },
+  "WF-12:6": {
+   "kind": "file",
+   "ref": "scripts/run_benchmarks.py",
+   "owner": "Operations"
+  },
+  "WF-12:7": {
+   "kind": "file",
+   "ref": "scripts/backup_restore.sh",
+   "owner": "Operations"
+  },
+  "WF-13:3": {
+   "kind": "query",
+   "ref": "db/queries/10_analytics_time_to_hire_kpi.sql"
+  },
+  "WF-13:4": {
+   "kind": "view",
+   "ref": "audit.ops_job_freshness"
+  },
+  "WF-14:2": {
+   "kind": "function",
+   "ref": "commercial.download_candidate_profile"
+  },
+  "WF-14:6": {
+   "kind": "application",
+   "owner": "Application",
+   "note": "serving the document bytes from storage"
+  },
+  "WF-15:3": {
+   "kind": "application",
+   "owner": "Application",
+   "note": "the call to the external system; the outbox around it is in the database"
+  },
+  "WF-17:4": {
+   "kind": "function",
+   "ref": "audit.log_change"
+  },
+  "WF-17:6": {
+   "kind": "state_machine",
+   "ref": "messaging.support_ticket"
+  },
+  "WF-18:4": {
+   "kind": "workflow_ref",
+   "ref": "WF-02"
+  },
+  "WF-19:5": {
+   "kind": "workflow_ref",
+   "ref": "WF-14"
+  },
+  "WF-20:5": {
+   "kind": "application",
+   "owner": "Application",
+   "note": "paying out the reward"
+  },
+  "WF-03:7": {
+   "kind": "state_machine",
+   "ref": "recruitment.job_posting"
+  }
  },
  "audit": {
-  "WF-01": {"classes": [1, 2, 5]}, "WF-02": {"none": "profile edits are not a sensitive class; document access is recorded in profile.candidate_activity_log"},
-  "WF-03": {"none": "publishing a job is not a sensitive class; the status change is kept in the row history"},
-  "WF-04": {"none": "creating an application is not a sensitive class; its stage history is class 12 under WF-05"},
-  "WF-05": {"classes": [12]}, "WF-06": {"none": "consultant requests are business records with their own status history, not a sensitive class"},
-  "WF-07": {"none": "gig requests and assignments are business records, not a sensitive class"},
-  "WF-08": {"classes": [6, 7]}, "WF-09": {"classes": [14]}, "WF-10": {"classes": [3, 4]}, "WF-11": {"classes": [9, 10]},
-  "WF-12": {"none": "operations; the restore check is recorded in audit.maintenance_run"}, "WF-13": {"none": "operations; each run is recorded in audit.maintenance_run"},
-  "WF-14": {"classes": [11, 13]}, "WF-15": {"none": "failures are written to audit.system_error_log; the exchange itself is not a sensitive class"},
-  "WF-16": {"classes": [7]}, "WF-17": {"classes": [8]}, "WF-18": {"none": "learning records are not a sensitive class"},
-  "WF-19": {"classes": [11]}, "WF-20": {"none": "community content is not a sensitive class"}, "WF-21": {"none": "changes arrive as reviewed migrations"}
+  "WF-01": {
+   "classes": [
+    1,
+    2,
+    5
+   ]
+  },
+  "WF-02": {
+   "none": "profile edits are not a sensitive class; document access is recorded in profile.candidate_activity_log"
+  },
+  "WF-03": {
+   "none": "publishing a job is not a sensitive class; the status change is kept in the row history"
+  },
+  "WF-04": {
+   "none": "creating an application is not a sensitive class; its stage history is class 12 under WF-05"
+  },
+  "WF-05": {
+   "classes": [
+    12
+   ]
+  },
+  "WF-06": {
+   "none": "consultant requests are business records with their own status history, not a sensitive class"
+  },
+  "WF-07": {
+   "none": "gig requests and assignments are business records, not a sensitive class"
+  },
+  "WF-08": {
+   "classes": [
+    6,
+    7
+   ]
+  },
+  "WF-09": {
+   "classes": [
+    14
+   ]
+  },
+  "WF-10": {
+   "classes": [
+    3,
+    4
+   ]
+  },
+  "WF-11": {
+   "classes": [
+    9,
+    10
+   ]
+  },
+  "WF-12": {
+   "none": "operations; the restore check is recorded in audit.maintenance_run"
+  },
+  "WF-13": {
+   "none": "operations; each run is recorded in audit.maintenance_run"
+  },
+  "WF-14": {
+   "classes": [
+    11,
+    13
+   ]
+  },
+  "WF-15": {
+   "none": "failures are written to audit.system_error_log; the exchange itself is not a sensitive class"
+  },
+  "WF-16": {
+   "classes": [
+    7
+   ]
+  },
+  "WF-17": {
+   "classes": [
+    8
+   ]
+  },
+  "WF-18": {
+   "none": "learning records are not a sensitive class"
+  },
+  "WF-19": {
+   "classes": [
+    11
+   ]
+  },
+  "WF-20": {
+   "none": "community content is not a sensitive class"
+  },
+  "WF-21": {
+   "none": "changes arrive as reviewed migrations"
+  }
  }
 }

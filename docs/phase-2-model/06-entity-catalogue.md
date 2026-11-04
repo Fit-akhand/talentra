@@ -5,16 +5,16 @@
 
 Every table the implemented schema holds, with its bounded schema, kind, size, relationship counts and the Rule Group 4 audit and lifecycle columns it carries.
 
-**Totals:** 113 base tables + 3 partitions = 116 relations across 10 schemas.
+**Totals:** 123 base tables + 3 partitions = 126 relations across 10 schemas.
 
 ## Summary by schema
 
 | Schema | Tables | Partitions |
 |:--|--:|--:|
 | `core` | 11 | 0 |
-| `master` | 13 | 0 |
-| `profile` | 18 | 0 |
-| `recruitment` | 16 | 3 |
+| `master` | 15 | 0 |
+| `profile` | 22 | 0 |
+| `recruitment` | 20 | 3 |
 | `gig` | 9 | 0 |
 | `commercial` | 11 | 0 |
 | `sourcing` | 5 | 0 |
@@ -35,25 +35,27 @@ Audit columns = `created_at`, `created_by`, `updated_at`, `updated_by` (RG4). So
 | `permission` | 9 | 1 | 1 | all 4 | no | trg_permission_audit_columns |
 | `role` | 8 | 1 | 2 | all 4 | no | trg_role_audit_columns |
 | `role_permission` | 8 | 3 | 0 | all 4 | no | trg_role_permission_audit, trg_role_permission_audit_columns |
-| `user_account` | 14 | 1 | 104 | all 4 | yes | trg_user_account_audit_columns, trg_user_account_status_audit, trg_user_account_status_transition |
+| `user_account` | 14 | 1 | 113 | all 4 | yes | trg_user_account_audit_columns, trg_user_account_status_audit, trg_user_account_status_transition |
 | `user_block` | 9 | 2 | 0 | all 4 | no | trg_user_block_audit, trg_user_block_audit_columns |
 | `user_credential` | 13 | 1 | 0 | all 4 | no | trg_user_credential_audit, trg_user_credential_audit_columns |
 | `user_device` | 14 | 1 | 0 | all 4 | no | trg_user_device_audit_columns |
 | `user_role` | 8 | 2 | 0 | all 4 | no | trg_user_role_audit, trg_user_role_audit_columns |
-| `user_session` | 12 | 1 | 0 | all 4 | no | trg_user_session_audit_columns |
+| `user_session` | 12 | 1 | 0 | all 4 | no | trg_user_session_audit_columns, trg_user_session_last_active |
 
 ### `master`
 
 | Table | Cols | FK out | FK in | Audit cols (RG4) | Soft delete | Triggers |
 |:--|--:|--:|--:|:--|:--|:--|
-| `city` | 8 | 2 | 4 | all 4 | no | trg_city_audit_columns |
+| `city` | 8 | 2 | 5 | all 4 | no | trg_city_audit_columns |
 | `country` | 10 | 1 | 3 | all 4 | no | trg_country_audit_columns |
+| `department` | 8 | 1 | 2 | all 4 | no | trg_department_audit_columns |
 | `employment_type` | 8 | 1 | 2 | all 4 | no | trg_employment_type_audit_columns |
 | `enumeration_value` | 9 | 1 | 0 | all 4 | no | trg_enumeration_value_audit_columns |
 | `industry` | 8 | 1 | 2 | all 4 | no | trg_industry_audit_columns |
+| `job_perk` | 8 | 1 | 1 | all 4 | no | trg_job_perk_audit_columns |
 | `job_role` | 10 | 2 | 3 | all 4 | no | trg_job_role_audit_columns |
 | `language` | 9 | 1 | 5 | all 4 | no | trg_language_audit_columns |
-| `qualification` | 8 | 1 | 1 | all 4 | no | trg_qualification_audit_columns |
+| `qualification` | 8 | 1 | 2 | all 4 | no | trg_qualification_audit_columns |
 | `skill` | 9 | 1 | 4 | all 4 | no | trg_skill_audit_columns |
 | `state` | 9 | 2 | 1 | all 4 | no | trg_state_audit_columns |
 | `status_machine_exemption` | 9 | 1 | 0 | all 4 | no | trg_status_machine_exemption_audit_columns |
@@ -67,20 +69,24 @@ Audit columns = `created_at`, `created_by`, `updated_at`, `updated_by` (RG4). So
 | `candidate_activity_log` | 7 | 2 | 0 | none | no | trg_candidate_activity_log_append_only, trg_candidate_activity_log_block_truncate |
 | `candidate_assessment` | 12 | 2 | 1 | all 4 | no | trg_candidate_assessment_audit_columns |
 | `candidate_assessment_score` | 12 | 3 | 0 | all 4 | no | trg_candidate_assessment_score_audit_columns |
+| `candidate_diversity_profile` | 8 | 2 | 0 | all 4 | no | trg_candidate_diversity_profile_audit_columns |
 | `candidate_document` | 21 | 3 | 1 | all 4 | yes | trg_candidate_document_audit_columns, trg_candidate_document_status_transition |
-| `candidate_education` | 14 | 3 | 0 | all 4 | no | trg_candidate_education_audit_columns |
+| `candidate_education` | 15 | 3 | 0 | all 4 | no | trg_candidate_education_audit_columns, trg_candidate_education_search |
+| `candidate_job_preference` | 11 | 2 | 0 | all 4 | no | trg_candidate_job_preference_audit_columns |
 | `candidate_language` | 11 | 3 | 0 | all 4 | no | trg_candidate_language_audit_columns |
 | `candidate_location` | 8 | 3 | 0 | all 4 | no | trg_candidate_location_audit_columns |
-| `candidate_profile` | 14 | 2 | 19 | all 4 | yes | trg_candidate_profile_audit_columns, trg_candidate_profile_self_registration, trg_candidate_profile_status_transition |
+| `candidate_profile` | 15 | 2 | 22 | all 4 | yes | trg_candidate_profile_audit_columns, trg_candidate_profile_search, trg_candidate_profile_self_registration, trg_candidate_profile_status_transition |
 | `candidate_profile_completion` | 15 | 2 | 0 | all 4 | no | trg_candidate_profile_completion_audit_columns |
 | `candidate_project` | 15 | 2 | 0 | all 4 | no | trg_candidate_project_audit_columns |
+| `candidate_search_document` | 4 | 1 | 0 | none | no | - |
 | `candidate_search_history` | 10 | 2 | 0 | all 4 | no | trg_candidate_search_history_audit_columns |
-| `candidate_skill` | 10 | 3 | 0 | all 4 | no | trg_candidate_skill_audit_columns |
-| `candidate_work_experience` | 14 | 4 | 0 | all 4 | no | trg_candidate_work_experience_audit_columns |
+| `candidate_skill` | 10 | 3 | 0 | all 4 | no | trg_candidate_skill_audit_columns, trg_candidate_skill_search |
+| `candidate_work_experience` | 15 | 5 | 0 | all 4 | no | trg_candidate_work_experience_audit_columns, trg_candidate_work_experience_search |
 | `course` | 11 | 1 | 1 | all 4 | no | trg_course_audit_columns |
 | `course_enrolment` | 12 | 3 | 0 | all 4 | no | trg_course_enrolment_audit_columns, trg_course_enrolment_status_transition |
 | `profile_view_history` | 7 | 3 | 0 | none | no | trg_profile_view_history_append_only, trg_profile_view_history_block_truncate |
 | `recruiter_bookmark` | 9 | 3 | 0 | all 4 | no | trg_recruiter_bookmark_audit_columns |
+| `recruiter_search` | 12 | 2 | 0 | all 4 | no | trg_recruiter_search_audit_columns |
 | `resume_template` | 10 | 1 | 1 | all 4 | no | trg_resume_template_audit_columns |
 
 ### `recruitment`
@@ -89,15 +95,19 @@ Audit columns = `created_at`, `created_by`, `updated_at`, `updated_by` (RG4). So
 |:--|--:|--:|--:|:--|:--|:--|
 | `application_question_response` | 11 | 3 | 0 | all 4 | no | trg_application_question_response_audit_columns |
 | `application_status_history` | 7 | 2 | 0 | none | no | trg_application_status_history_append_only, trg_application_status_history_block_truncate |
-| `candidate_application` | 13 | 4 | 3 | all 4 | no | trg_candidate_application_audit_columns, trg_candidate_application_status_history, trg_candidate_application_status_transition |
+| `candidate_application` | 14 | 4 | 3 | all 4 | no | trg_candidate_application_audit_columns, trg_candidate_application_recruiter, trg_candidate_application_status_history, trg_candidate_application_status_transition |
 | `candidate_application_partitioned` (partitioned) | 13 | 0 | 0 | all 4 | no | trg_candidate_application_partitioned_audit_columns |
 | `company_review_summary` | 13 | 2 | 0 | all 4 | no | trg_company_review_summary_audit_columns |
 | `job_position` | 10 | 3 | 0 | all 4 | no | trg_job_position_audit_columns, trg_job_position_status_transition |
-| `job_posting` | 30 | 8 | 9 | all 4 | yes | trg_job_posting_audit_columns, trg_job_posting_status_transition |
+| `job_posting` | 33 | 9 | 13 | all 4 | yes | trg_job_posting_audit_columns, trg_job_posting_status_transition |
+| `job_posting_location` | 7 | 3 | 0 | all 4 | no | trg_job_posting_location_audit_columns |
+| `job_posting_perk` | 7 | 3 | 0 | all 4 | no | trg_job_posting_perk_audit_columns |
+| `job_qualification_requirement` | 9 | 3 | 0 | all 4 | no | trg_job_qualification_requirement_audit_columns |
 | `job_questionnaire` | 9 | 2 | 1 | all 4 | no | trg_job_questionnaire_audit_columns |
 | `job_questionnaire_question` | 11 | 2 | 1 | all 4 | no | trg_job_questionnaire_question_audit_columns |
+| `job_recruiter_assignment` | 10 | 2 | 0 | all 4 | no | trg_job_recruiter_assignment_audit_columns, trg_job_recruiter_assignment_member |
 | `job_skill_requirement` | 10 | 3 | 0 | all 4 | no | trg_job_skill_requirement_audit_columns |
-| `organization` | 16 | 2 | 19 | all 4 | yes | trg_organization_audit_columns, trg_organization_status_audit, trg_organization_status_transition |
+| `organization` | 16 | 2 | 20 | all 4 | yes | trg_organization_audit_columns, trg_organization_status_audit, trg_organization_status_transition |
 | `organization_hierarchy` | 9 | 2 | 0 | all 4 | no | trg_organization_hierarchy_audit_columns |
 | `organization_identifier` | 14 | 3 | 0 | all 4 | no | trg_organization_identifier_audit_columns, trg_organization_identifier_binding, trg_organization_identifier_status_transition |
 | `organization_location` | 17 | 3 | 0 | all 4 | no | trg_organization_location_audit_columns |
@@ -199,7 +209,7 @@ Audit columns = `created_at`, `created_by`, `updated_at`, `updated_by` (RG4). So
 
 ## Conformance snapshot (Rule Group 4)
 
-- Base tables with all four audit columns: **98 / 113**.
-- Per column: `created_at` 98/113, `created_by` 99/113, `updated_at` 98/113, `updated_by` 98/113, `deleted_at` 9/113.
+- Base tables with all four audit columns: **107 / 123**.
+- Per column: `created_at` 107/123, `created_by` 108/123, `updated_at` 107/123, `updated_by` 107/123, `deleted_at` 9/123.
 - The docket requires all four on every business table, and a `deleted_at` on every soft-deleted entity with the soft/hard classification stated per entity. No table has `deleted_at` and no classification is recorded: both are open RG4 gaps.
 - Tables without all four audit columns are listed above; each is either append-only (no `updated_*` by design) or a gap to resolve in Step 17.

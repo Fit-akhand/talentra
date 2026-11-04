@@ -1095,6 +1095,99 @@ def already_seeded(conn):
         return cur.fetchone()[0]
 
 
+def seed_recruiter_portal(conn, ctx):
+    """What the recruiter portal needs on top of the core data (migrations 040 to 042): departments, extra cities, perks, qualification
+    requirements and assigned recruiters on jobs. Chosen with hashes of the row id and the seed, so the same seed gives the same data."""
+    print("[*] Seeding recruiter-portal data (departments, locations, perks, qualifications, assigned recruiters)...")
+    seed = int(ctx.seed)
+    with conn.cursor() as cur:
+        cur.execute("SELECT array_agg(id ORDER BY id) FROM master.department"); depts = cur.fetchone()[0]
+        cur.execute("SELECT array_agg(id ORDER BY id) FROM master.job_perk"); perks = cur.fetchone()[0]
+        cur.execute("SELECT array_agg(id ORDER BY id) FROM master.city"); cities = cur.fetchone()[0]
+        cur.execute("SELECT array_agg(id ORDER BY id) FROM master.qualification WHERE name <> 'Other'"); quals = cur.fetchone()[0]
+        h = lambda col, k: f"mod(abs(hashint8({col} # ({seed} * {k} + 7))::numeric), 1000000)"
+        cur.execute(f"""UPDATE recruitment.job_posting j
+                           SET department_id = (%(d)s::bigint[])[1 + {h('j.id', 3)}::int %% %(nd)s],
+                               show_salary = (j.salary_min IS NOT NULL AND {h('j.id', 5)} < 600000),
+                               has_variable_pay = ({h('j.id', 11)} < 200000)""", {"d": depts, "nd": len(depts)})
+        cur.execute(f"""INSERT INTO recruitment.job_posting_location (job_posting_id, city_id)
+                        SELECT j.id, (%(c)s::bigint[])[1 + {h('j.id', 13)}::int %% %(nc)s] FROM recruitment.job_posting j WHERE {h('j.id', 17)} < 300000
+                        UNION
+                        SELECT j.id, (%(c)s::bigint[])[1 + {h('j.id', 19)}::int %% %(nc)s] FROM recruitment.job_posting j WHERE {h('j.id', 23)} < 150000
+                        ON CONFLICT DO NOTHING""", {"c": cities, "nc": len(cities)})
+        cur.execute(f"""INSERT INTO recruitment.job_posting_perk (job_posting_id, job_perk_id)
+                        SELECT j.id, (%(p)s::bigint[])[1 + {h('j.id * 10 + k', 29)}::int %% %(np)s]
+                          FROM recruitment.job_posting j CROSS JOIN generate_series(1, 3) k WHERE {h('j.id', 31)} < 700000
+                        ON CONFLICT DO NOTHING""", {"p": perks, "np": len(perks)})
+        cur.execute(f"""INSERT INTO recruitment.job_qualification_requirement (job_posting_id, qualification_id, field_of_study, is_mandatory)
+                        SELECT j.id, (%(q)s::bigint[])[1 + {h('j.id', 37)}::int %% %(nq)s],
+                               CASE WHEN {h('j.id', 41)} < 500000 THEN (ARRAY['Computer Science', 'Business Administration', 'Electronics', 'Commerce', 'Mechanical Engineering'])[1 + {h('j.id', 43)}::int %% 5] END,
+                               {h('j.id', 47)} < 750000
+                          FROM recruitment.job_posting j WHERE {h('j.id', 53)} < 800000
+                        ON CONFLICT DO NOTHING""", {"q": quals, "nq": len(quals)})
+        cur.execute(f"""INSERT INTO recruitment.job_recruiter_assignment (job_posting_id, recruiter_user_account_id, assigned_by_user_account_id)
+                        SELECT j.id, m.user_account_id, j.created_by_user_account_id
+                          FROM recruitment.job_posting j
+                          CROSS JOIN LATERAL (SELECT om.user_account_id FROM recruitment.organization_member om
+                                               WHERE om.organization_id = j.organization_id AND om.membership_status = 'active'
+                                                 AND om.organization_role IN ('recruiter', 'hiring_manager', 'owner', 'admin')
+                                               ORDER BY mod(abs(hashint8(om.user_account_id # (j.id + {seed}))::numeric), 100000) LIMIT 2) m
+                        ON CONFLICT DO NOTHING""")
+        cur.execute(f"""UPDATE profile.candidate_work_experience w SET department_id = (%(d)s::bigint[])[1 + {h('w.id', 59)}::int %% %(nd)s]
+                         WHERE {h('w.id', 61)} < 600000""", {"d": depts, "nd": len(depts)})
+        # candidates: notice period and pay, optional self-declared gender, last activity, how the course was studied
+        cur.execute(f"""INSERT INTO profile.candidate_job_preference (candidate_profile_id, notice_period_days, current_annual_ctc, expected_annual_ctc, ctc_currency_code, is_ctc_visible_to_recruiters)
+                        SELECT c.id, (ARRAY[0, 15, 30, 45, 60, 90])[1 + {h('c.id', 67)}::int % 6],
+                               CASE WHEN {h('c.id', 71)} < 800000 THEN base END,
+                               CASE WHEN {h('c.id', 71)} < 800000 THEN round(base * (1.1 + {h('c.id', 73)} / 3000000.0), 2) END,
+                               CASE WHEN {h('c.id', 71)} < 800000 THEN cur END,
+                               {h('c.id', 79)} < 350000
+                          FROM (SELECT cp.id,
+                                       CASE WHEN {h('cp.id', 83)} < 850000 THEN 'INR' ELSE 'USD' END AS cur,
+                                       CASE WHEN {h('cp.id', 83)} < 850000 THEN round(300000 + {h('cp.id', 89)} * 3.5, 2) ELSE round(30000 + {h('cp.id', 89)} * 0.12, 2) END AS base
+                                  FROM profile.candidate_profile cp WHERE {h('cp.id', 97)} < 750000) c
+                        ON CONFLICT DO NOTHING""")
+        cur.execute(f"""INSERT INTO profile.candidate_diversity_profile (candidate_profile_id, gender)
+                        SELECT cp.id, CASE WHEN {h('cp.id', 101)} < 380000 THEN 'female' WHEN {h('cp.id', 101)} < 930000 THEN 'male' WHEN {h('cp.id', 101)} < 950000 THEN 'non_binary' ELSE 'prefer_not_to_say' END
+                          FROM profile.candidate_profile cp WHERE {h('cp.id', 103)} < 350000
+                        ON CONFLICT DO NOTHING""")
+        cur.execute(f"""UPDATE profile.candidate_profile cp SET last_active_at = %(as_of)s::timestamptz - ({h('cp.id', 107)} / 1000000.0 * 240) * INTERVAL '1 day'
+                         WHERE cp.last_active_at IS NULL""", {"as_of": ctx.as_of})
+        cur.execute(f"""UPDATE profile.candidate_education e SET study_mode = CASE WHEN {h('e.id', 109)} < 750000 THEN 'full_time' WHEN {h('e.id', 109)} < 900000 THEN 'part_time' ELSE 'distance' END
+                         WHERE {h('e.id', 113)} < 800000""")
+        # applications: recruiters source some candidates (a first stage before the candidate applies) and most applications have a recruiter
+        cur.execute("SELECT count(*) FROM recruitment.candidate_application"); n_apps = cur.fetchone()[0]
+        cur.execute("SELECT array_agg(id ORDER BY id) FROM (SELECT id FROM profile.candidate_profile WHERE profile_status = 'active' AND visibility <> 'private' ORDER BY id LIMIT 200000) x"); cands = cur.fetchone()[0]
+        cur.execute("SELECT array_agg(id ORDER BY id) FROM (SELECT j.id FROM recruitment.job_posting j WHERE j.job_status = 'published' AND EXISTS (SELECT 1 FROM recruitment.job_recruiter_assignment r WHERE r.job_posting_id = j.id) ORDER BY j.id LIMIT 100000) x"); jobs = cur.fetchone()[0]
+        if cands and jobs:
+            cur.execute(f"""INSERT INTO recruitment.candidate_application (candidate_profile_id, job_posting_id, application_status, application_source, applied_at,
+                                                                           assigned_recruiter_user_account_id, created_by_user_account_id, updated_by_user_account_id)
+                            SELECT x.c, x.j, 'sourced', 'recruiter_sourced', %(as_of)s::timestamptz - ({h('x.g', 127)} / 1000000.0 * 60) * INTERVAL '1 day', r.rid, r.rid, r.rid
+                              FROM (SELECT g, (%(c)s::bigint[])[1 + {h('g', 131)}::int %% %(nc)s] AS c, (%(j)s::bigint[])[1 + {h('g', 137)}::int %% %(nj)s] AS j
+                                      FROM generate_series(1, %(n)s) g) x
+                              CROSS JOIN LATERAL (SELECT recruiter_user_account_id AS rid FROM recruitment.job_recruiter_assignment a WHERE a.job_posting_id = x.j ORDER BY a.id LIMIT 1) r
+                            ON CONFLICT DO NOTHING""", {"as_of": ctx.as_of, "c": cands, "nc": len(cands), "j": jobs, "nj": len(jobs), "n": max(20, int(n_apps * 0.06))})
+            cur.execute(f"""UPDATE recruitment.candidate_application SET application_status = 'shortlisted', updated_by_user_account_id = assigned_recruiter_user_account_id
+                             WHERE application_status = 'sourced' AND {h('id', 139)} < 350000""")
+        cur.execute("ALTER TABLE recruitment.candidate_application DISABLE TRIGGER trg_candidate_application_recruiter")      # the assignment table was already validated
+        cur.execute(f"""UPDATE recruitment.candidate_application a SET assigned_recruiter_user_account_id = r.rid
+                          FROM (SELECT a2.id, (SELECT recruiter_user_account_id FROM recruitment.job_recruiter_assignment x WHERE x.job_posting_id = a2.job_posting_id
+                                                ORDER BY mod(abs(hashint8(x.id # a2.id)::numeric), 1000) LIMIT 1) AS rid
+                                  FROM recruitment.candidate_application a2 WHERE a2.assigned_recruiter_user_account_id IS NULL AND {h('a2.id', 149)} < 700000) r
+                         WHERE a.id = r.id AND r.rid IS NOT NULL""")
+        cur.execute("ALTER TABLE recruitment.candidate_application ENABLE TRIGGER trg_candidate_application_recruiter")
+        # a few saved and recent recruiter searches
+        cur.execute(f"""INSERT INTO profile.recruiter_search (organization_id, user_account_id, name, criteria_json, result_count, is_alert_enabled, last_run_at)
+                        SELECT r.organization_id, r.recruiter_user_account_id, CASE WHEN g %% 3 = 0 THEN 'Search ' || g END,
+                               jsonb_build_object('keywords', (ARRAY['Java', 'Python developer', 'UX designer', 'DevOps, Kubernetes', 'Accountant'])[1 + g %% 5], 'min_experience', 2, 'max_experience', 5),
+                               (g * 7) %% 300, (g %% 6 = 0), %(as_of)s::timestamptz - (g %% 40) * INTERVAL '1 day'
+                          FROM generate_series(1, 60) g
+                          CROSS JOIN LATERAL (SELECT j.organization_id, a.recruiter_user_account_id FROM recruitment.job_recruiter_assignment a JOIN recruitment.job_posting j ON j.id = a.job_posting_id
+                                               ORDER BY a.id OFFSET g * 3 LIMIT 1) r
+                        ON CONFLICT DO NOTHING""", {"as_of": ctx.as_of})
+    conn.commit()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Talentra synthetic data generator")
     parser.add_argument("--scale", choices=sorted(SCALE_CONFIGS), default="dev", help="dev | medium | laptop (see module docstring)")
@@ -1118,6 +1211,9 @@ def main():
             sys.exit(2)
         t_start = time.time()
         set_audit_triggers(conn, False)
+        with conn.cursor() as _c:
+            _c.execute("SET talentra.skip_search_refresh = 'on'")       # search documents are rebuilt in bulk below
+        conn.commit()
         seed_master_reference_geo(conn)
         seed_candidates(conn, ctx)
         orgs = seed_employers(conn, ctx)
@@ -1129,6 +1225,11 @@ def main():
         seed_messaging_and_support(conn, ctx, orgs)
         seed_profile_depth(conn, ctx)
         seed_engagement(conn, ctx, orgs)
+        seed_recruiter_portal(conn, ctx)
+        with conn.cursor() as _c:
+            _c.execute("SET talentra.skip_search_refresh = 'off'")
+            _c.execute("SELECT profile.rebuild_candidate_search_documents()")
+        conn.commit()
         set_audit_triggers(conn, True)      # the audited actions that follow are real ones
         seed_structure(conn, ctx, orgs)
         load_analytics(conn)

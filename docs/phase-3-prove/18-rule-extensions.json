@@ -305,6 +305,87 @@
    ],
    "owner": "Platform",
    "source": "docket section 6; NFR-027"
+  },
+  {
+   "id": "BR-041",
+   "rule": "A job can show its salary only if it has one (show_salary needs a salary); the salary stays private by default",
+   "objects": [
+    "ck_job_posting_show_salary"
+   ],
+   "tests": [
+    "test_job_posting_extras.sql"
+   ],
+   "owner": "Finance",
+   "source": "recruiter portal plan; migration 040"
+  },
+  {
+   "id": "BR-042",
+   "rule": "Only a recruiter of the job's organisation, or an agency recruiter mapped to it as a client, can be assigned to its jobs",
+   "objects": [
+    "enforce_recruiter_assignment",
+    "is_recruiter_for_organization",
+    "uq_job_recruiter_assignment"
+   ],
+   "tests": [
+    "test_job_posting_extras.sql"
+   ],
+   "owner": "Security",
+   "source": "recruiter portal plan; migration 040"
+  },
+  {
+   "id": "BR-043",
+   "rule": "A candidate's current and expected pay are shown to recruiters only when the candidate chose to reveal them; hidden pay counts as undisclosed in a search",
+   "objects": [
+    "candidate_search_attributes_for",
+    "ck_candidate_job_preference_currency"
+   ],
+   "tests": [
+    "test_candidate_search_fields.sql",
+    "test_search_and_pipeline.sql"
+   ],
+   "owner": "Security",
+   "source": "DEC-36; migration 041"
+  },
+  {
+   "id": "BR-044",
+   "rule": "Gender is an optional self-declaration readable only by the candidate and administrators; it is never shown to recruiters and never a search filter",
+   "objects": [
+    "ck_candidate_diversity_profile_gender",
+    "uq_candidate_diversity_profile_profile"
+   ],
+   "tests": [
+    "test_candidate_search_fields.sql"
+   ],
+   "owner": "Security",
+   "source": "DEC-35; migration 041"
+  },
+  {
+   "id": "BR-045",
+   "rule": "A sourced application needs source recruiter_sourced, can be created only by a recruiter of the job's organisation for a candidate they may see, and moves only to applied, shortlisted, rejected or withdrawn",
+   "objects": [
+    "ck_candidate_application_sourced",
+    "enforce_application_recruiter",
+    "enforce_status_transition"
+   ],
+   "tests": [
+    "test_search_and_pipeline.sql"
+   ],
+   "owner": "Product",
+   "source": "recruiter portal plan; migration 042"
+  },
+  {
+   "id": "BR-046",
+   "rule": "Candidate keyword search returns only active, non-private profiles the searching recruiter may see, never a candidate who blocked the organisation, and only to a user acting for an organisation",
+   "objects": [
+    "search_candidates",
+    "can_view_candidate",
+    "build_keyword_query"
+   ],
+   "tests": [
+    "test_search_and_pipeline.sql"
+   ],
+   "owner": "Security",
+   "source": "DEC-37; migration 042"
   }
  ]
 }
